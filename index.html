@@ -104,12 +104,12 @@
       <span class="chip" data-aid="immutable">IMX</span>
       <span class="chip" data-aid="apecoin">APE</span>
       <span style="flex:1"></span>
-      <span class="chip range on" data-days="90">3M</span>
-      <span class="chip range" data-days="180">6M</span>
+      <span class="chip range on" data-days="ALL">ALT</span>
       <span class="chip range" data-days="365">1&Aring;</span>
-      <span class="chip range" data-days="1000">MAX</span>
+      <span class="chip range" data-days="180">6M</span>
+      <span class="chip range" data-days="90">3M</span>
     </div>
-    <div id="chartWrap">Laster prishistorikk&hellip;</div>
+    <div id="chartWrap">Laster hele prishistorikken (BTC siden 2017)&hellip;</div>
   </div>
 
   <div class="box" style="margin-top:14px"><h2>Backtest &mdash; vektet portef&oslash;lje vs benchmarks</h2>
@@ -129,7 +129,7 @@ const ASSETS = {
   immutable:   {sym: 'IMXUSDT', name: 'Immutable', col: '#ff6a4d', w: 5},
   apecoin:      {sym: 'APEUSDT', name: 'ApeCoin',   col: '#c0a0ff', w: 5}
 };
-const chartState = { active: new Set(['bitcoin','ethereum']), days: 90, data: {} };
+const chartState = { active: new Set(['bitcoin','ethereum']), days: 100000, data: {} };
 
 setInterval(() => {
   document.getElementById('clock').textContent = new Date().toLocaleTimeString('no-NO');
@@ -172,10 +172,25 @@ async function loadTickers() {
   document.getElementById('speech').innerHTML = speech[phase];
 }
 
+async function fetchAllKlines(sym) {
+  let out = [], startTime = 0, pages = 0;
+  while (pages++ < 10) {
+    const k = await jget('https://api.binance.com/api/v3/klines?symbol=' + sym + '&interval=1d&startTime=' + startTime + '&limit=1000');
+    if (!Array.isArray(k) || !k.length) break;
+    const fresh = k.filter(x => !out.length || x[0] > out[out.length - 1][0]);
+    if (!fresh.length) break;
+    out = out.concat(fresh);
+    if (k.length < 1000) break;
+    startTime = fresh[fresh.length - 1][0] + 1;
+    await new Promise(r => setTimeout(r, 250));
+  }
+  return out;
+}
+
 async function loadHistory() {
   for (const [aid, a] of Object.entries(ASSETS)) {
     try {
-      const k = await jget('https://api.binance.com/api/v3/klines?symbol=' + a.sym + '&interval=1d&limit=1000');
+      const k = await fetchAllKlines(a.sym);
       chartState.data[aid] = k.map(x => ({
         d: new Date(x[0]).toISOString().slice(0, 10),
         p: parseFloat(x[4])
@@ -319,15 +334,17 @@ function computeBacktest(days) {
   }
   const btc = hist['bitcoin'];
   if (!btc) return {strategy: 0, dcaBtc: 0, holdBtc: 0, info: 'mangler data'};
+  const idx = {};
+  for (const [aid, s] of Object.entries(hist)) { idx[aid] = {}; for (const x of s) idx[aid][x.d] = x.p; }
   const dates = btc.map(x => x.d);
-  const p = d => { const v = {}; for (const [aid, s] of Object.entries(hist)) { const pt = s.find(x => x.d === d); if (pt) v[aid] = pt.p; } return v; };
+  const p = d => { const v = {}; for (const [aid, m] of Object.entries(idx)) { if (m[d] !== undefined) v[aid] = m[d]; } return v; };
   const p0 = p(dates[0]), p1 = p(dates[dates.length - 1]);
   const wsum = Object.keys(p0).reduce((a, k) => a + ASSETS[k].w, 0) || 1;
   const indexEnd = Object.keys(p0).reduce((a, k) => a + ASSETS[k].w / wsum * (p1[k] / p0[k]), 1);
   let dcaQty = 0, seen = new Set();
   for (const d of dates) {
     const m = d.slice(0, 7);
-    if (!seen.has(m)) { seen.add(m); dcaQty += 500 / btc.find(x => x.d === d).p; }
+    if (!seen.has(m)) { seen.add(m); dcaQty += 500 / idx['bitcoin'][d]; }
   }
   const nMonths = seen.size;
   const invested = 10000 + 500 * nMonths;
@@ -344,7 +361,7 @@ document.querySelectorAll('.chip').forEach(ch => {
     if (ch.dataset.days) {
       document.querySelectorAll('.chip.range').forEach(c => c.classList.remove('on'));
       ch.classList.add('on');
-      chartState.days = parseInt(ch.dataset.days);
+      chartState.days = ch.dataset.days === 'ALL' ? 100000 : parseInt(ch.dataset.days);
     } else {
       const aid = ch.dataset.aid;
       if (chartState.active.has(aid)) chartState.active.delete(aid);
