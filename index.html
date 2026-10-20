@@ -215,6 +215,34 @@ async function loadTickers() {
   document.getElementById('speech').innerHTML = speech[phase];
 }
 
+function updateSpeechWithCowen() {
+  // Miss Minutes kommenterer Cowen-signalene nar historikken er klar
+  const btc = (chartState.data['bitcoin'] || []).filter(x => x.p > 0);
+  if (btc.length < 400) return;
+  const tops = detectCycleTops(btc);
+  const lastD = btc[btc.length - 1].d;
+  const after = tops.map(t => ({ t, dd: Math.round((new Date(lastD) - new Date(t.d)) / 86400000) }))
+    .filter(x => x.dd >= 0 && x.dd <= 730).sort((a, b) => a.dd - b.dd)[0];
+  const risk = computeRiskMetric(btc);
+  const band = computeSupportBand(btc);
+  const el = document.getElementById('speech');
+  if (!el) return;
+  let cowen = '';
+  if (after && after.dd <= 400) {
+    cowen = 'P.S. The timeline resembles ' + after.t.d.slice(0, 4) +
+      ', dear &mdash; ' + after.dd + ' days past the cycle top. ' +
+      'Historically, post-top branches favor the bears.';
+  } else if (!band.overBand) {
+    cowen = 'P.S. Price has slipped <b>below</b> the bull market support band. A red branch, indeed.';
+  } else {
+    cowen = 'P.S. No cycle-top shadow on this branch &mdash; support band intact. Carry on!';
+  }
+  cowen += ' (Risk metric: ' + risk.risk01.toFixed(2) +
+    (risk.risk01 > 0.6 ? ' &mdash; expensive territory!' :
+     risk.risk01 < 0.4 ? ' &mdash; historically cheap.' : ' &mdash; middling.') + ')';
+  el.innerHTML += '<br><span style="font-size:12px">' + cowen + '</span>';
+}
+
 async function fetchAllKlines(sym) {
   let out = [], startTime = 0, pages = 0;
   while (pages++ < 10) {
@@ -282,6 +310,7 @@ async function loadHistory() {
   drawOutlook();
   drawCowen();
   drawBacktest();
+  updateSpeechWithCowen();
 }
 
 function drawChart() {
