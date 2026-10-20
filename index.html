@@ -134,6 +134,11 @@
     <div id="chartWrap">Laster hele prishistorikken (BTC siden 2011: Bitstamp + Binance)&hellip;</div>
   </div>
 
+  <div class="box" style="margin-top:14px"><h2>NFT-galleriet &mdash; floor prices</h2>
+    <table><thead><tr><th>Samling</th><th>Floor</th><th>Markedsverdi</th><th>24t volum</th></tr></thead>
+    <tbody id="nftRows"><tr><td colspan="4">Henter NFT-floor prices&hellip;</td></tr></tbody></table>
+  </div>
+
   <div class="box" style="margin-top:14px"><h2>6-m&aring;neders outlook &mdash; sannsynligheter fra historiske base-rater</h2>
     <div id="outlookWrap">Regner ut fra hele historikken&hellip;</div>
   </div>
@@ -151,6 +156,13 @@
 </div>
 
 <script>
+const NFTS = {
+  cryptopunks: {cgId: 'cryptopunks', name: 'CryptoPunks', col: '#0a8f3c'},
+  bayc:        {cgId: 'bored-ape-yacht-club', name: 'Bored Ape YC', col: '#ff9100'},
+  doodles:    {cgId: 'doodles-official', name: 'Doodles', col: '#ff2a2a'},
+  dickbutts:  {cgId: 'bitcoin-crypto-dickbutts', name: 'Crypto DickButts', col: '#aa00ff'}
+};
+
 const ASSETS = {
   bitcoin:      {sym: 'BTCUSDT', name: 'Bitcoin',   col: '#ff2a2a', w: 35},
   ethereum:     {sym: 'ETHUSDT', name: 'Ethereum',  col: '#2a6bff', w: 25},
@@ -171,6 +183,29 @@ async function jget(url) {
   const r = await fetch(url);
   if (!r.ok) throw new Error(url + ' -> ' + r.status);
   return r.json();
+}
+
+async function loadNFTs() {
+  // CoinGecko NFT floor prices (gratis, men streng rate-limit: 1 kall per ~10-15 s)
+  const rows = [];
+  for (const [nid, n] of Object.entries(NFTS)) {
+    try {
+      const d = await jget('https://api.coingecko.com/api/v3/nfts/' + n.cgId);
+      const floor = d.floor_price && d.floor_price.usd;
+      const mcap = d.market_cap && d.market_cap.usd;
+      const vol = d.volume_24h && d.volume_24h.usd;
+      if (floor === undefined || floor === null) throw new Error('mangler floor');
+      rows.push('<tr><td style="color:' + n.col + '">&#9679; ' + n.name.toUpperCase() + ' <span style="font-size:10px;color:#111111">[NFT]</span></td>' +
+        '<td>$' + floor.toLocaleString('en-US', {maximumFractionDigits: floor < 100 ? 2 : 0}) + '</td>' +
+        '<td>$' + (mcap ? Math.round(mcap).toLocaleString('en-US') : 'n/a') + '</td>' +
+        '<td>$' + (vol ? Math.round(vol).toLocaleString('en-US') : 'n/a') + '</td></tr>');
+    } catch (e) {
+      rows.push('<tr><td style="color:' + n.col + '">&#9679; ' + n.name.toUpperCase() + ' <span style="font-size:10px;color:#111111">[NFT]</span></td>' +
+        '<td colspan="3" class="warn">Ikke tilgjengelig (' + e.message.slice(0, 40) + ')</td></tr>');
+    }
+    await new Promise(r => setTimeout(r, 12000));  // CoinGecko NFT: ~5 kall/min
+  }
+  document.getElementById('nftRows').innerHTML = rows.join('');
 }
 
 async function loadTickers() {
@@ -622,6 +657,7 @@ document.querySelectorAll('.chip').forEach(ch => {
 
 loadTickers();
 loadHistory();
+loadNFTs();
 </script>
 </body>
 </html>
