@@ -70,3 +70,4 @@ python3 pipeline.py
 
 TVA garanterer ikke avkastning — "for all time, always" gjelder bare disiplinen.
 Aldri invester mer enn du har råd til å tape.
+
