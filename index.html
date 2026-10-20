@@ -84,7 +84,7 @@
 
   <div class="grid">
     <div class="box"><h2>Markedsstatus</h2><div class="big" id="phase">LASTER&hellip;</div><div id="phaseSub"></div></div>
-    <div class="box"><h2>Aktiver overv&aring;ket</h2><div class="big" id="nAssets">6</div><div>BTC &middot; ETH &middot; SOL &middot; SUI &middot; IMX &middot; APE</div></div>
+    <div class="box"><h2>Aktiver overv&aring;ket</h2><div class="big" id="nAssets">8</div><div>BTC &middot; ETH &middot; SOL &middot; SUI &middot; ZEC &middot; DEEP &middot; WAL &middot; TAO</div></div>
     <div class="box"><h2>Datakilde</h2><div class="big">BINANCE</div><div>Live API &mdash; ingen n&oslash;kkel kreves</div></div>
     <div class="box"><h2>M&aring;l</h2><div class="big">2029</div><div>Maksimal profitt &le; 31.12.2029</div></div>
   </div>
@@ -101,8 +101,10 @@
       <span class="chip on" data-aid="ethereum">ETH</span>
       <span class="chip" data-aid="solana">SOL</span>
       <span class="chip" data-aid="sui">SUI</span>
-      <span class="chip" data-aid="immutable">IMX</span>
-      <span class="chip" data-aid="apecoin">APE</span>
+      <span class="chip" data-aid="zcash">ZEC</span>
+      <span class="chip" data-aid="deepbook">DEEP</span>
+      <span class="chip" data-aid="walrus">WAL</span>
+      <span class="chip" data-aid="tao">TAO</span>
       <span style="flex:1"></span>
       <span class="chip range on" data-days="ALL">ALT</span>
       <span class="chip range" data-days="365">1&Aring;</span>
@@ -110,6 +112,10 @@
       <span class="chip range" data-days="90">3M</span>
     </div>
     <div id="chartWrap">Laster hele prishistorikken (BTC siden 2011: Bitstamp + Binance)&hellip;</div>
+  </div>
+
+  <div class="box" style="margin-top:14px"><h2>6-m&aring;neders outlook &mdash; sannsynligheter fra historiske base-rater</h2>
+    <div id="outlookWrap">Regner ut fra hele historikken&hellip;</div>
   </div>
 
   <div class="box" style="margin-top:14px"><h2>Backtest &mdash; vektet portef&oslash;lje vs benchmarks</h2>
@@ -124,10 +130,12 @@
 const ASSETS = {
   bitcoin:      {sym: 'BTCUSDT', name: 'Bitcoin',   col: '#ff8c1a', w: 35},
   ethereum:     {sym: 'ETHUSDT', name: 'Ethereum',  col: '#ffd23e', w: 25},
-  solana:       {sym: 'SOLUSDT', name: 'Solana',    col: '#20b2aa', w: 15},
-  sui:           {sym: 'SUIUSDT', name: 'Sui',       col: '#7fffa0', w: 15},
-  immutable:   {sym: 'IMXUSDT', name: 'Immutable', col: '#ff6a4d', w: 5},
-  apecoin:      {sym: 'APEUSDT', name: 'ApeCoin',   col: '#c0a0ff', w: 5}
+  solana:       {sym: 'SOLUSDT', name: 'Solana',    col: '#20b2aa', w: 10},
+  sui:           {sym: 'SUIUSDT', name: 'Sui',       col: '#7fffa0', w: 10},
+  zcash:        {sym: 'ZECUSDT', name: 'Zcash',     col: '#ffd9b3', w: 5},
+  deepbook:     {sym: 'DEEPUSDT', name: 'DeepBook',   col: '#c0a0ff', w: 5, bybit: true},
+  walrus:       {sym: 'WALUSDT', name: 'Walrus',    col: '#ff9e80', w: 5},
+  tao:          {sym: 'TAOUSDT', name: 'Bittensor', col: '#9ad0ff', w: 5}
 };
 const chartState = { active: new Set(['bitcoin','ethereum']), days: 100000, data: {} };
 
@@ -146,12 +154,21 @@ async function loadTickers() {
   let bullish = 0;
   for (const [aid, a] of Object.entries(ASSETS)) {
     try {
-      const t = await jget('https://api.binance.com/api/v3/ticker/24hr?symbol=' + a.sym);
-      const price = parseFloat(t.lastPrice), chg = parseFloat(t.priceChangePercent);
+      let price, chg;
+      if (a.bybit) {
+        const t = await jget('https://api.bybit.com/v5/market/tickers?category=spot&symbol=' + a.sym);
+        const item = (t.result && t.result.list && t.result.list[0]) || {};
+        price = parseFloat(item.lastPrice);
+        chg = parseFloat(item.price24hPcnt) * 100;
+      } else {
+        const t = await jget('https://api.binance.com/api/v3/ticker/24hr?symbol=' + a.sym);
+        price = parseFloat(t.lastPrice); chg = parseFloat(t.priceChangePercent);
+      }
       let phase = 'stabil';
       if (chg > 5) { phase = 'markup'; bullish++; }
       else if (chg < -5) { phase = 'nedgang'; }
       else if (chg > 0) { phase = 'stigende'; bullish++; }
+      if (isNaN(price)) throw new Error('ugyldig pris');
       rows.push('<tr><td>' + a.name.toUpperCase() + '</td><td>$' +
         price.toLocaleString('en-US', {maximumFractionDigits: price < 10 ? 4 : 2}) +
         '</td><td class="' + (chg >= 0 ? 'good' : 'bad') + '">' +
@@ -161,9 +178,11 @@ async function loadTickers() {
     }
   }
   document.getElementById('assetRows').innerHTML = rows.join('');
-  const phase = bullish >= 4 ? 'MARKUP' : (bullish <= 1 ? 'NEDGANG' : 'STABIL');
+  const n = Object.keys(ASSETS).length;
+  const upfrac = bullish / n;
+  const phase = upfrac >= 0.6 ? 'MARKUP' : (upfrac <= 0.25 ? 'NEDGANG' : 'STABIL');
   document.getElementById('phase').textContent = phase;
-  document.getElementById('phaseSub').textContent = bullish + ' av 6 aktiver stiger siste 24t';
+  document.getElementById('phaseSub').textContent = bullish + ' av ' + n + ' aktiver stiger siste 24t';
   const speech = {
     MARKUP: 'Timeline stable. Markets trending up &mdash; your DCA plan remains on schedule!',
     NEDGANG: 'The timeline is in decline &mdash; unsettling, yes, but discipline has survived worse branches.',
@@ -207,6 +226,15 @@ async function fetchPrehistory() {
 async function loadHistory() {
   for (const [aid, a] of Object.entries(ASSETS)) {
     try {
+      if (a.bybit) {
+        const j = await jget('https://api.bybit.com/v5/market/kline?category=spot&symbol=' + a.sym + '&interval=D&limit=1000');
+        const lst = (j.result && j.result.list) || [];
+        chartState.data[aid] = lst
+          .map(x => ({ d: new Date(Number(x[0])).toISOString().slice(0, 10), p: parseFloat(x[4]) }))
+          .filter(x => x.p > 0)
+          .sort((x, y) => x.d < y.d ? -1 : 1);
+        continue;
+      }
       const k = await fetchAllKlines(a.sym);
       let pts = k.map(x => ({
         d: new Date(x[0]).toISOString().slice(0, 10),
@@ -227,6 +255,7 @@ async function loadHistory() {
     } catch (e) { chartState.data[aid] = []; }
   }
   drawChart();
+  drawOutlook();
   drawBacktest();
 }
 
@@ -337,10 +366,45 @@ function drawChart() {
   document.getElementById('chartWrap').innerHTML = svg + '<div style="display:flex;flex-wrap:wrap">' + legend + '</div>';
 }
 
+function drawOutlook() {
+  const H = 183;  // ~6 mnd i dager
+  const rows = [];
+  for (const [aid, a] of Object.entries(ASSETS)) {
+    const s = (chartState.data[aid] || []).filter(x => x.p > 0);
+    if (s.length < H + 30) continue;
+    let pos = 0, tot = 0, ups = [], downs = [], flat = 0;
+    for (let i = 0; i + H < s.length; i++) {
+      const r = s[i + H].p / s[i].p - 1;
+      tot++;
+      if (r > 0.15) ups.push(r);
+      else if (r < -0.15) downs.push(r);
+      else flat++;
+    }
+    if (tot < 50) continue;
+    const pUp = ups.length / tot * 100, pFlat = flat / tot * 100, pDown = downs.length / tot * 100;
+    rows.push({ name: a.name.toUpperCase(), col: a.col, pUp, pFlat, pDown, n: tot,
+      avgUp: ups.length ? (ups.reduce((x, y) => x + y, 0) / ups.length * 100) : 0,
+      avgDn: downs.length ? (downs.reduce((x, y) => x + y, 0) / downs.length * 100) : 0 });
+  }
+  const bar = (pct, col) => '<div style="height:14px;width:' + Math.max(pct, 0.5).toFixed(1) + '%;background:' + col + '"></div>';
+  document.getElementById('outlookWrap').innerHTML =
+    '<table style="width:100%"><tr><th>Asset</th><th>Opp &gt;+15%</th><th>Flat &plusmn;15%</th><th>Ned &gt;-15%</th><th>Snitt opp/ned</th><th>Historiske perioder</th></tr>' +
+    rows.map(r =>
+      '<tr><td style="color:' + r.col + '">&#9679; ' + r.name + '</td>' +
+      '<td class="good">' + r.pUp.toFixed(0) + '%</td>' +
+      '<td class="warn">' + r.pFlat.toFixed(0) + '%</td>' +
+      '<td class="bad">' + r.pDown.toFixed(0) + '%</td>' +
+      '<td>+' + r.avgUp.toFixed(0) + '% / ' + r.avgDn.toFixed(0) + '%</td>' +
+      '<td style="color:#8a6b35">' + r.n + '</td></tr>').join('') +
+    '</table>' +
+    '<div style="font-size:11px;color:#8a6b35;margin-top:6px">Sannsynligheter = historisk andel 6-m&aring;neders perioder (slag-i-slag, hele tilgjengelige historikk) per utfallskategori. ' +
+    'Base-rater, ikke sp&aring;dommer &mdash; markedet kan ikke forutsis sikkert. Grense: &plusmn;15 %.</div>';
+}
+
 function drawBacktest() {
   const bt = computeBacktest(365);
   const rows = [
-    ['Vektet portef&oslash;lje (35/25/15/15/5/5)', bt.strategy, '#ff8c1a'],
+    ['Vektet portef&oslash;lje (35/25/10/10/5/5/5/5)', bt.strategy, '#ff8c1a'],
     ['DCA kun BTC ($500/mnd)', bt.dcaBtc, '#8a6b35'],
     ['Hold BTC fra dag 1', bt.holdBtc, '#8a6b35']
   ];
