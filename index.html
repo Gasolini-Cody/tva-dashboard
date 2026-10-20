@@ -95,7 +95,7 @@
   </div>
 
   <div class="box chart-box">
-    <h2>Sacred Timeline &mdash; Prishistorikk (log-skala)</h2>
+    <h2>Sacred Timeline &mdash; Prishistorikk (log-skala + verdisettingskanal &agrave; la Raoul Pal)</h2>
     <div class="chart-controls">
       <span class="chip on" data-aid="bitcoin">BTC</span>
       <span class="chip on" data-aid="ethereum">ETH</span>
@@ -234,6 +234,41 @@ function drawChart() {
       + ' ' + (P.l + iw * 0.1).toFixed(1) + ',' + Y(series[0].p).toFixed(1)
       + ' ' + X(series[0].d).toFixed(1) + ',' + Y(series[0].p).toFixed(1)
       + series.map(x => ' L' + X(x.d).toFixed(1) + ',' + Y(x.p).toFixed(1)).join('');
+    // Raoul Pal-stil: log-regresjonskanal rundt tidslinjen
+    if (series.length >= 30) {
+      const t0ms = new Date(series[0].d).getTime();
+      const xs = series.map(x => (new Date(x.d).getTime() - t0ms) / 86400000);
+      const ys = series.map(x => Math.log10(x.p));
+      const n = xs.length;
+      const mx = xs.reduce((a, b) => a + b, 0) / n;
+      const my = ys.reduce((a, b) => a + b, 0) / n;
+      let num = 0, den = 0;
+      for (let i = 0; i < n; i++) { num += (xs[i] - mx) * (ys[i] - my); den += (xs[i] - mx) ** 2; }
+      const slope = den ? num / den : 0;
+      const intercept = my - slope * mx;
+      const resid = ys.map((y, i) => y - (slope * xs[i] + intercept));
+      const sd = Math.sqrt(resid.reduce((a, r) => a + r * r, 0) / n);
+      const regY = (x, k) => Y(Math.pow(10, slope * x + intercept + k * sd));
+      const x0 = X(series[0].d), x1 = X(series[series.length - 1].d);
+      const tx0 = 0, tx1 = xs[n - 1];
+      // kanalbånd (tva-stil: fylt sone med glød)
+      let band = 'M' + x0.toFixed(1) + ',' + regY(tx0, +2).toFixed(1)
+        + ' L' + x1.toFixed(1) + ',' + regY(tx1, +2).toFixed(1)
+        + ' L' + x1.toFixed(1) + ',' + regY(tx1, -2).toFixed(1)
+        + ' L' + x0.toFixed(1) + ',' + regY(tx0, -2).toFixed(1) + ' Z';
+      svg += '<path d="' + band + '" fill="' + col + '" opacity="0.08"/>';
+      svg += '<path d="' + band + '" fill="none" stroke="' + col + '" stroke-width="0.7" opacity="0.35" stroke-dasharray="4 4"/>';
+      for (const k of [-1, 0, +1]) {
+        let rp = 'M' + x0.toFixed(1) + ',' + regY(tx0, k).toFixed(1)
+          + ' L' + x1.toFixed(1) + ',' + regY(tx1, k).toFixed(1);
+        svg += '<path d="' + rp + '" fill="none" stroke="' + col + '" stroke-width="' + (k === 0 ? '1.2' : '0.8') + '" opacity="' + (k === 0 ? '0.55' : '0.3') + '" stroke-dasharray="6 5"/>';
+      }
+      // posisjon i kanalen (Raoul Pals verdiindikator)
+      const lastZ = (Math.log10(series[n - 1].p) - (slope * tx1 + intercept)) / (sd || 1);
+      const zLbl = lastZ > 1.5 ? 'OVERHEAT' : lastZ < -1.5 ? 'UNDERVERDIERT' : 'NÆR MITT';
+      const zCol = lastZ > 1.5 ? '#ff6a4d' : lastZ < -1.5 ? '#7fffa0' : '#ffd23e';
+      svg += '<text x="' + (x1 - 8).toFixed(1) + '" y="' + (Y(series[n - 1].p) - 12).toFixed(1) + '" fill="' + zCol + '" font-size="10" text-anchor="end">' + zLbl + ' (z=' + lastZ.toFixed(1) + ')</text>';
+    }
     svg += '<path d="' + path + '" fill="none" stroke="' + col + '" stroke-width="5" opacity="0.25" filter="url(#glow)"/>';
     svg += '<path d="' + path + '" fill="none" stroke="' + col + '" stroke-width="1.6" filter="url(#glow)"/>';
     series.forEach((x, k) => {
