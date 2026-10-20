@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<title>TVA — Miss Minutes Investment Terminal</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600&display=swap');
+  :root {
+    --tva-orange: #ff8c1a;
+    --tva-amber: #ffd23e;
+    --tva-cream: #f5ead3;
+    --tva-dark: #1a1208;
+    --tva-teal: #20b2aa;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--tva-dark);
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(255,140,26,.12), transparent 40%),
+      repeating-linear-gradient(45deg, transparent 0 60px, rgba(245,234,211,.03) 60px 61px);
+    color: var(--tva-cream);
+    font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+    padding: 18px;
+  }
+  .frame {
+    border: 3px solid var(--tva-orange); border-radius: 10px;
+    padding: 18px; max-width: 1100px; margin: 0 auto;
+    box-shadow: 0 0 30px rgba(255,140,26,.25), inset 0 0 60px rgba(255,140,26,.05);
+  }
+  header { display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 2px solid var(--tva-orange); padding-bottom: 10px; margin-bottom: 14px; }
+  .logo { font-size: 26px; font-weight: 600; letter-spacing: 5px; color: var(--tva-orange); }
+  .logo small { display: block; font-size: 10px; letter-spacing: 3px; color: var(--tva-amber); }
+  .clock { text-align: right; font-size: 12px; color: var(--tva-amber); }
+  .clock .big { font-size: 20px; color: var(--tva-orange); }
+  .miss { display: flex; gap: 14px; align-items: center; margin-bottom: 14px;
+    background: rgba(255,140,26,.07); border: 1px dashed var(--tva-amber);
+    border-radius: 8px; padding: 10px 14px; }
+  .avatar { width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0;
+    background: var(--tva-amber); color: #3a2a1a;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 600; font-size: 20px; box-shadow: 0 0 12px rgba(255,210,62,.5); }
+  .speech { font-size: 14px; font-style: italic; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+  .box { border: 1px solid var(--tva-orange); border-radius: 8px;
+    padding: 12px; background: rgba(26,18,8,.6); }
+  .box h2 { font-size: 12px; letter-spacing: 2px; color: var(--tva-amber);
+    text-transform: uppercase; margin-bottom: 8px;
+    border-bottom: 1px dotted var(--tva-orange); padding-bottom: 4px; }
+  .big { font-size: 26px; }
+  .good { color: #7fffa0; }
+  .bad { color: #ff6a4d; }
+  .warn { color: var(--tva-amber); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { border-bottom: 1px solid rgba(255,140,26,.25); padding: 5px 6px; text-align: left; }
+  th { color: var(--tva-amber); }
+  .chart-box { margin-top: 14px; position: relative;
+    background: radial-gradient(ellipse at 30% 0%, rgba(255,140,26,.10), transparent 55%),
+                linear-gradient(180deg, #120b04, #1a1208); }
+  .chart-controls { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+  .chip { padding: 3px 12px; border-radius: 12px; font-size: 12px;
+    border: 1px solid var(--tva-orange); cursor: pointer; user-select: none;
+    color: var(--tva-orange); background: transparent; }
+  .chip.on { background: var(--tva-orange); color: var(--tva-dark); }
+  .chip.range { color: var(--tva-amber); border-color: var(--tva-amber); }
+  .chip.range.on { background: var(--tva-amber); color: var(--tva-dark); }
+  svg text { font-family: 'Space Grotesk', sans-serif; letter-spacing: 1px; }
+  footer { margin-top: 16px; font-size: 11px; color: var(--tva-amber); text-align: center; }
+  .blink { animation: blink 1.4s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: .3; } }
+</style>
+</head>
+<body>
+<div class="frame">
+  <header>
+    <div class="logo">TVA<small>TIME VARIANCE AUTHORITY &mdash; INVESTMENT DIVISION</small></div>
+    <div class="clock"><div class="big" id="clock">--:--</div>CHRONO SYNC ACTIVE <span class="blink">&#9679;</span></div>
+  </header>
+
+  <div class="miss">
+    <div class="avatar">MM</div>
+    <div class="speech" id="speech">Analyserer Sacred Timeline&hellip;</div>
+  </div>
+
+  <div class="grid">
+    <div class="box"><h2>Markedsstatus</h2><div class="big" id="phase">LASTER&hellip;</div><div id="phaseSub"></div></div>
+    <div class="box"><h2>Aktiver overv&aring;ket</h2><div class="big" id="nAssets">6</div><div>BTC &middot; ETH &middot; SOL &middot; SUI &middot; IMX &middot; APE</div></div>
+    <div class="box"><h2>Datakilde</h2><div class="big">BINANCE</div><div>Live API &mdash; ingen n&oslash;kkel kreves</div></div>
+    <div class="box"><h2>M&aring;l</h2><div class="big">2029</div><div>Maksimal profitt &le; 31.12.2029</div></div>
+  </div>
+
+  <div class="box" style="margin-top:14px"><h2>Aktiver p&aring; timeline</h2>
+    <table><thead><tr><th>Asset</th><th>Pris</th><th>24t</th><th>Fase (est.)</th></tr></thead>
+    <tbody id="assetRows"><tr><td colspan="4">Henter live priser&hellip;</td></tr></tbody></table>
+  </div>
+
+  <div class="box chart-box">
+    <h2>Sacred Timeline &mdash; Prishistorikk (log-skala)</h2>
+    <div class="chart-controls">
+      <span class="chip on" data-aid="bitcoin">BTC</span>
+      <span class="chip on" data-aid="ethereum">ETH</span>
+      <span class="chip" data-aid="solana">SOL</span>
+      <span class="chip" data-aid="sui">SUI</span>
+      <span class="chip" data-aid="immutable">IMX</span>
+      <span class="chip" data-aid="apecoin">APE</span>
+      <span style="flex:1"></span>
+      <span class="chip range on" data-days="90">3M</span>
+      <span class="chip range" data-days="180">6M</span>
+      <span class="chip range" data-days="365">1&Aring;</span>
+      <span class="chip range" data-days="1000">MAX</span>
+    </div>
+    <div id="chartWrap">Laster prishistorikk&hellip;</div>
+  </div>
+
+  <div class="box" style="margin-top:14px"><h2>Backtest &mdash; vektet portef&oslash;lje vs benchmarks</h2>
+    <div id="btWrap">Regner ut fra historiske data&hellip;</div>
+  </div>
+
+  <footer>MISS MINUTES &mdash; "For all time. Always." &mdash; M&Aring;L: MAKSIMAL PROFITT &le; 31.12.2029<br>
+  Informasjon kun &mdash; ikke investeringsr&aring;d. TVA garanterer ikke avkastning.</footer>
+</div>
+
+<script>
+const ASSETS = {
+  bitcoin:      {sym: 'BTCUSDT', name: 'Bitcoin',   col: '#ff8c1a', w: 35},
+  ethereum:     {sym: 'ETHUSDT', name: 'Ethereum',  col: '#ffd23e', w: 25},
+  solana:       {sym: 'SOLUSDT', name: 'Solana',    col: '#20b2aa', w: 15},
+  sui:           {sym: 'SUIUSDT', name: 'Sui',       col: '#7fffa0', w: 15},
+  immutable:   {sym: 'IMXUSDT', name: 'Immutable', col: '#ff6a4d', w: 5},
+  apecoin:      {sym: 'APEUSDT', name: 'ApeCoin',   col: '#c0a0ff', w: 5}
+};
+const chartState = { active: new Set(['bitcoin','ethereum']), days: 90, data: {} };
+
+setInterval(() => {
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString('no-NO');
+}, 1000);
+
+async function jget(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(url + ' -> ' + r.status);
+  return r.json();
+}
+
+async function loadTickers() {
+  const rows = [];
+  let bullish = 0;
+  for (const [aid, a] of Object.entries(ASSETS)) {
+    try {
+      const t = await jget('https://api.binance.com/api/v3/ticker/24hr?symbol=' + a.sym);
+      const price = parseFloat(t.lastPrice), chg = parseFloat(t.priceChangePercent);
+      let phase = 'stabil';
+      if (chg > 5) { phase = 'markup'; bullish++; }
+      else if (chg < -5) { phase = 'nedgang'; }
+      else if (chg > 0) { phase = 'stigende'; bullish++; }
+      rows.push('<tr><td>' + a.name.toUpperCase() + '</td><td>$' +
+        price.toLocaleString('en-US', {maximumFractionDigits: price < 10 ? 4 : 2}) +
+        '</td><td class="' + (chg >= 0 ? 'good' : 'bad') + '">' +
+        (chg >= 0 ? '+' : '') + chg.toFixed(1) + '%</td><td>' + phase + '</td></tr>');
+    } catch (e) {
+      rows.push('<tr><td>' + a.name.toUpperCase() + '</td><td colspan="3" class="warn">Feil: ' + e.message + '</td></tr>');
+    }
+  }
+  document.getElementById('assetRows').innerHTML = rows.join('');
+  const phase = bullish >= 4 ? 'MARKUP' : (bullish <= 1 ? 'NEDGANG' : 'STABIL');
+  document.getElementById('phase').textContent = phase;
+  document.getElementById('phaseSub').textContent = bullish + ' av 6 aktiver stiger siste 24t';
+  const speech = {
+    MARKUP: 'Timeline stable. Markets trending up &mdash; your DCA plan remains on schedule!',
+    NEDGANG: 'The timeline is in decline &mdash; unsettling, yes, but discipline has survived worse branches.',
+    STABIL: 'Multiple branches in motion. Miss Minutes is watching all of them for you.'
+  };
+  document.getElementById('speech').innerHTML = speech[phase];
+}
+
+async function loadHistory() {
+  for (const [aid, a] of Object.entries(ASSETS)) {
+    try {
+      const k = await jget('https://api.binance.com/api/v3/klines?symbol=' + a.sym + '&interval=1d&limit=1000');
+      chartState.data[aid] = k.map(x => ({
+        d: new Date(x[0]).toISOString().slice(0, 10),
+        p: parseFloat(x[4])
+      }));
+    } catch (e) { chartState.data[aid] = []; }
+  }
+  drawChart();
+  drawBacktest();
+}
+
+function drawChart() {
+  const W = 1040, H = 380, P = {l: 70, r: 30, t: 26, b: 34};
+  const iw = W - P.l - P.r, ih = H - P.t - P.b;
+  const aids = [...chartState.active];
+  let all = [];
+  for (const aid of aids)
+    (chartState.data[aid] || []).slice(-chartState.days).forEach(x => all.push(x));
+  if (!all.length) {
+    document.getElementById('chartWrap').innerHTML = '<div style="padding:30px;color:#ffd23e">Ingen data &mdash; velg aktiver.</div>';
+    return;
+  }
+  const pts = all.filter(x => x.p > 0);
+  const lmin = Math.log10(Math.min(...pts.map(x => x.p)));
+  const lmax = Math.log10(Math.max(...pts.map(x => x.p))) || lmin + 1;
+  const dates = [...new Set(all.map(x => x.d))].sort();
+  const d0 = new Date(dates[0]).getTime(), d1 = new Date(dates[dates.length - 1]).getTime();
+  const span = Math.max(d1 - d0, 86400000);
+  const X = d => P.l + (new Date(d).getTime() - d0) / span * iw;
+  const Y = p => P.t + ih - (Math.log10(p) - lmin) / (lmax - lmin || 1) * ih;
+
+  let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto">';
+  svg += '<defs><filter id="glow" x="-40%" y="-40%" width="180%" height="180%">'
+      + '<feGaussianBlur stdDeviation="3.2" result="b"/>'
+      + '<feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>';
+  svg += '<rect width="' + W + '" height="' + H + '" fill="#0d0803"/>';
+  let g = lmin;
+  const step = Math.max(1, Math.floor((lmax - lmin) / 5));
+  while (g <= lmax + 1e-9) {
+    const y = Y(Math.pow(10, g)), v = Math.pow(10, g);
+    svg += '<line x1="' + P.l + '" y1="' + y + '" x2="' + (W - P.r) + '" y2="' + y + '" stroke="rgba(255,140,26,.14)"/>';
+    const label = v >= 1 ? '$' + (v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v.toFixed(0)) : '$' + v.toPrecision(1);
+    svg += '<text x="' + (P.l - 10) + '" y="' + (y + 4) + '" fill="#8a6b35" font-size="10" text-anchor="end">' + label + '</text>';
+    g += step;
+  }
+  for (let i = 0; i <= 4; i++) {
+    const di = dates[Math.floor(i * (dates.length - 1) / 4)] || dates[0];
+    svg += '<text x="' + X(di) + '" y="' + (H - 10) + '" fill="#8a6b35" font-size="10" text-anchor="middle">' + di.slice(2, 7) + '</text>';
+  }
+  const midY = P.t + ih / 2;
+  for (const aid of aids) {
+    const series = (chartState.data[aid] || []).slice(-chartState.days).filter(x => x.p > 0);
+    if (series.length < 2) continue;
+    const col = ASSETS[aid].col;
+    const path = 'M' + P.l + ',' + midY.toFixed(1)
+      + ' C' + (P.l + iw * 0.08).toFixed(1) + ',' + midY.toFixed(1)
+      + ' ' + (P.l + iw * 0.1).toFixed(1) + ',' + Y(series[0].p).toFixed(1)
+      + ' ' + X(series[0].d).toFixed(1) + ',' + Y(series[0].p).toFixed(1)
+      + series.map(x => ' L' + X(x.d).toFixed(1) + ',' + Y(x.p).toFixed(1)).join('');
+    svg += '<path d="' + path + '" fill="none" stroke="' + col + '" stroke-width="5" opacity="0.25" filter="url(#glow)"/>';
+    svg += '<path d="' + path + '" fill="none" stroke="' + col + '" stroke-width="1.6" filter="url(#glow)"/>';
+    series.forEach((x, k) => {
+      if (k % 30 === 15)
+        svg += '<circle cx="' + X(x.d).toFixed(1) + '" cy="' + Y(x.p).toFixed(1) + '" r="2.4" fill="#fff2d8" filter="url(#glow)"/>';
+    });
+    const last = series[series.length - 1];
+    svg += '<circle cx="' + X(last.d).toFixed(1) + '" cy="' + Y(last.p).toFixed(1) + '" r="3.4" fill="#ffffff" filter="url(#glow)"/>';
+  }
+  const nowX = W - P.r - 2;
+  svg += '<line x1="' + nowX + '" y1="' + (P.t - 8) + '" x2="' + nowX + '" y2="' + (P.t + ih + 8) + '" stroke="#f5ead3" stroke-width="1.4" stroke-dasharray="5 5" opacity="0.7"/>';
+  svg += '<text x="' + (nowX - 8) + '" y="' + (P.t - 12) + '" fill="#f5ead3" font-size="11" text-anchor="end" letter-spacing="2">N\u00C5</text>';
+  svg += '</svg>';
+  const legend = aids.map(aid => {
+    const s = (chartState.data[aid] || []).slice(-chartState.days);
+    if (s.length < 2) return '';
+    const chg = (s[s.length - 1].p / s[0].p - 1) * 100;
+    return '<div style="margin:4px 12px 0 0;font-size:12px;color:' + ASSETS[aid].col + '">&#9679; ' +
+      ASSETS[aid].name.toUpperCase() + ' <span style="color:' + (chg >= 0 ? '#7fffa0' : '#ff6a4d') + '">' +
+      (chg >= 0 ? '+' : '') + chg.toFixed(1) + '% i perioden</span></div>';
+  }).join('');
+  document.getElementById('chartWrap').innerHTML = svg + '<div style="display:flex;flex-wrap:wrap">' + legend + '</div>';
+}
+
+function drawBacktest() {
+  const bt = computeBacktest(365);
+  const rows = [
+    ['Vektet portef&oslash;lje (35/25/15/15/5/5)', bt.strategy, '#ff8c1a'],
+    ['DCA kun BTC ($500/mnd)', bt.dcaBtc, '#8a6b35'],
+    ['Hold BTC fra dag 1', bt.holdBtc, '#8a6b35']
+  ];
+  const maxv = Math.max(...rows.map(r => Math.abs(r[1])), 1);
+  document.getElementById('btWrap').innerHTML = rows.map(([name, v, col]) =>
+    '<div style="display:flex;align-items:center;gap:10px;margin:6px 0">' +
+    '<div style="width:300px;font-size:13px">' + name + '</div>' +
+    '<div style="width:70px;font-size:13px;color:' + col + '">' + (v >= 0 ? '+' : '') + v.toFixed(1) + '%</div>' +
+    '<div style="flex:1;height:14px;border-radius:7px;background:rgba(60,40,15,.8);overflow:hidden">' +
+    '<div style="width:' + Math.min(100, Math.abs(v) / maxv * 100).toFixed(0) + '%;height:100%;background:' + (v >= 0 ? col : '#ff6a4d') + '"></div></div></div>'
+  ).join('') +
+  '<div style="font-size:11px;color:#8a6b35;margin-top:6px">Basert p\u00E5 siste 365 dager fra Binance-data. ' + bt.info + '</div>';
+}
+
+function computeBacktest(days) {
+  const hist = {};
+  for (const aid of Object.keys(ASSETS)) {
+    const s = (chartState.data[aid] || []).slice(-days);
+    if (s.length > 2) hist[aid] = s;
+  }
+  const btc = hist['bitcoin'];
+  if (!btc) return {strategy: 0, dcaBtc: 0, holdBtc: 0, info: 'mangler data'};
+  const dates = btc.map(x => x.d);
+  const p = d => { const v = {}; for (const [aid, s] of Object.entries(hist)) { const pt = s.find(x => x.d === d); if (pt) v[aid] = pt.p; } return v; };
+  const p0 = p(dates[0]), p1 = p(dates[dates.length - 1]);
+  const wsum = Object.keys(p0).reduce((a, k) => a + ASSETS[k].w, 0) || 1;
+  const indexEnd = Object.keys(p0).reduce((a, k) => a + ASSETS[k].w / wsum * (p1[k] / p0[k]), 1);
+  let dcaQty = 0, seen = new Set();
+  for (const d of dates) {
+    const m = d.slice(0, 7);
+    if (!seen.has(m)) { seen.add(m); dcaQty += 500 / btc.find(x => x.d === d).p; }
+  }
+  const nMonths = seen.size;
+  const invested = 10000 + 500 * nMonths;
+  return {
+    strategy: (indexEnd - 1) * 100,
+    dcaBtc: (dcaQty * p1['bitcoin'] + 10000 - invested) / invested * 100,
+    holdBtc: (invested * p1['bitcoin'] / p0['bitcoin'] - invested) / invested * 100,
+    info: 'Investert: $' + invested.toLocaleString() + ' | ' + nMonths + ' m\u00E5neder'
+  };
+}
+
+document.querySelectorAll('.chip').forEach(ch => {
+  ch.addEventListener('click', () => {
+    if (ch.dataset.days) {
+      document.querySelectorAll('.chip.range').forEach(c => c.classList.remove('on'));
+      ch.classList.add('on');
+      chartState.days = parseInt(ch.dataset.days);
+    } else {
+      const aid = ch.dataset.aid;
+      if (chartState.active.has(aid)) chartState.active.delete(aid);
+      else chartState.active.add(aid);
+      ch.classList.toggle('on', chartState.active.has(aid));
+    }
+    drawChart();
+  });
+});
+
+loadTickers();
+loadHistory();
+</script>
+</body>
+</html>
