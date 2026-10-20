@@ -138,6 +138,10 @@
     <div id="outlookWrap">Regner ut fra hele historikken&hellip;</div>
   </div>
 
+  <div class="box" style="margin-top:14px"><h2>Cryptoverse-justering &mdash; syklusanalyse &agrave; la Benjamin Cowen</h2>
+    <div id="cowenWrap">Analyserer syklusanalyse&hellip;</div>
+  </div>
+
   <div class="box" style="margin-top:14px"><h2>Backtest &mdash; vektet portef&oslash;lje vs benchmarks</h2>
     <div id="btWrap">Regner ut fra historiske data&hellip;</div>
   </div>
@@ -276,6 +280,7 @@ async function loadHistory() {
   }
   drawChart();
   drawOutlook();
+  drawCowen();
   drawBacktest();
 }
 
@@ -384,6 +389,107 @@ function drawChart() {
       (chg >= 0 ? '+' : '') + chg.toFixed(1) + '% i perioden</span></div>';
   }).join('');
   document.getElementById('chartWrap').innerHTML = svg + '<div style="display:flex;flex-wrap:wrap">' + legend + '</div>';
+}
+
+function detectCycleTops(series) {
+  // syklustopp = ATH som (1) ikke overskrides pa 365 dager og (2) faller >30% innen 730 dager
+  const tops = [];
+  let ath = 0;
+  for (let i = 0; i < series.length; i++) {
+    const p = series[i].p;
+    if (p > ath) {
+      ath = p;
+      const nxt365 = series.slice(i + 1, i + 366).map(x => x.p);
+      const nxt730 = series.slice(i + 1, i + 731).map(x => x.p);
+      if ((!nxt365.length || Math.max(...nxt365) <= p) && nxt730.length && Math.min(...nxt730) < p * 0.70) {
+        tops.push({ d: series[i].d, p });
+      }
+    }
+  }
+  return tops;
+}
+
+function computeRiskMetric(series) {
+  // Cowens risikometrisk ~ log-regresjonsresidual normalisert 0-1 over historikken
+  const xs = series.map((_, i) => i);
+  const ys = series.map(x => Math.log10(x.p));
+  const n = xs.length;
+  const mx = xs.reduce((a, b) => a + b, 0) / n;
+  const my = ys.reduce((a, b) => a + b, 0) / n;
+  let num = 0, den = 0;
+  for (let i = 0; i < n; i++) { num += (xs[i] - mx) * (ys[i] - my); den += (xs[i] - mx) ** 2; }
+  const slope = den ? num / den : 0;
+  const intercept = my - slope * mx;
+  const resid = ys.map((y, i) => y - (slope * xs[i] + intercept));
+  const sd = Math.sqrt(resid.reduce((a, r) => a + r * r, 0) / n) || 1;
+  const zs = resid.map(r => r / sd);
+  const zmin = Math.min(...zs), zmax = Math.max(...zs);
+  const risk01 = (zs[n - 1] - zmin) / (zmax - zmin || 1);
+  return { risk01, zNow: zs[n - 1], zmin, zmax };
+}
+
+function computeSupportBand(series) {
+  // bull market support band: 20W SMA (~140d) + 21W EMA (~147d)
+  const ps = series.map(x => x.p);
+  const sma = ps.slice(-140).reduce((a, b) => a + b, 0) / Math.min(140, ps.length);
+  let ema = ps[0];
+  for (const p of ps.slice(1)) ema = ema + (2 / 148) * (p - ema);
+  const last = ps[ps.length - 1];
+  return { sma, ema, last, overBand: last > Math.max(sma, ema) };
+}
+
+function drawCowen() {
+  const btc = (chartState.data['bitcoin'] || []).filter(x => x.p > 0);
+  if (btc.length < 400) {
+    document.getElementById('cowenWrap').textContent = 'Mangler BTC-historikk for syklusanalyse.';
+    return;
+  }
+  const tops = detectCycleTops(btc);
+  const H = 183;
+  const inPostTop = d => tops.some(t => {
+    const dd = (new Date(d) - new Date(t.d)) / 86400000;
+    return dd >= 0 && dd <= 400;
+  });
+  let allU = 0, allD = 0, allF = 0, bU = 0, bD = 0, bF = 0;
+  for (let i = 0; i + H < btc.length; i++) {
+    const r = btc[i + H].p / btc[i].p - 1;
+    const post = inPostTop(btc[i].d);
+    if (r > 0.15) { allU++; if (post) bU++; }
+    else if (r < -0.15) { allD++; if (post) bD++; }
+    else { allF++; if (post) bF++; }
+  }
+  const nAll = allU + allD + allF, nB = bU + bD + bF;
+  const pAllU = nAll ? allU / nAll * 100 : 0, pB_U = nB ? bU / nB * 100 : 0;
+  const pAllD = nAll ? allD / nAll * 100 : 0, pB_D = nB ? bD / nB * 100 : 0;
+  const fUp = pAllU ? pB_U / pAllU : 1, fDn = pAllD ? pB_D / pAllD : 1;
+
+  const lastD = btc[btc.length - 1].d;
+  const daysAfter = tops.map(t => ({ t, dd: Math.round((new Date(lastD) - new Date(t.d)) / 86400000) }))
+    .filter(x => x.dd >= 0 && x.dd <= 730).sort((a, b) => a.dd - b.dd)[0];
+  const inPostNow = daysAfter && daysAfter.dd <= 400;
+
+  const risk = computeRiskMetric(btc);
+  const band = computeSupportBand(btc);
+
+  const topList = tops.map(t => '<span style="margin-right:14px">' + t.d.slice(0, 7) + ' ($' + (t.p >= 1000 ? (t.p/1000).toFixed(0) + 'k' : t.p.toFixed(0)) + ')</span>').join('');
+
+  // justerte sannsynligheter (kun hvis vi er i post-topp-fasen)
+  const adj = inPostNow ? '<div style="margin-top:10px;font-size:14px">Justert for syklusposisjon: ' +
+      '<span class="good">opp ' + Math.max(0, pAllU * fUp).toFixed(0) + '%</span> | ' +
+      '<span class="warn">flat ' + Math.max(0, 100 - pAllU * fUp - pAllD * fDn).toFixed(0) + '%</span> | ' +
+      '<span class="bad">ned ' + Math.min(100, pAllD * fDn).toFixed(0) + '%</span></div>' : '';
+
+  document.getElementById('cowenWrap').innerHTML =
+    '<table style="width:100%"><tr><th>Syklustopper</th><th>Baserate opp/ned</th><th>&Aring;r etter topp</th><th>Posisjon n&aring;</th></tr>' +
+    '<tr><td style="font-size:12px">' + topList + '</td>' +
+    '<td><span class="good">' + pAllU.toFixed(0) + '%</span> / <span class="bad">' + pAllD.toFixed(0) + '%</span></td>' +
+    '<td><span class="good">' + pB_U.toFixed(0) + '%</span> / <span class="bad">' + pB_D.toFixed(0) + '%</span> <span style="font-size:11px">(n=' + nB + ')</span></td>' +
+    '<td>' + (daysAfter ? daysAfter.dd + ' d etter topp ' + daysAfter.t.d.slice(0, 7) + (inPostNow ? ' <span class="bad">&mdash; POST-TOPP</span>' : '') : 'ikke i post-topp-fase') + '</td></tr></table>' +
+    '<div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px">' +
+    '<div style="font-size:13px">Risikometrisk: <span style="color:' + (risk.risk01 > 0.6 ? '#ff2a2a' : risk.risk01 < 0.4 ? '#0a8f3c' : '#c98a00') + '">' + risk.risk01.toFixed(2) + '</span> <span style="font-size:11px">(0 = billig, 1 = dyrt; z=' + risk.zNow.toFixed(2) + ')</span></div>' +
+    '<div style="font-size:13px">Supportb&aring;nd: <span class="' + (band.overBand ? 'good' : 'bad') + '">' + (band.overBand ? 'OVER' : 'UNDER') + '</span> <span style="font-size:11px">(pris $' + band.last.toFixed(0) + 'k vs 20W SMA $' + (band.sma/1000).toFixed(0) + 'k / 21W EMA $' + (band.ema/1000).toFixed(0) + 'k)</span></div></div>' +
+    adj +
+    '<div style="font-size:11px;color:#111111;margin-top:8px">Metode: Into The Cryptoverse (Benjamin Cowen) &mdash; syklusanalyse (4-&aring;rs sykluser, &aring;ret etter topp er historisk bj&oslash;rneår), risikometrisk via log-regresjon, bull market support band (20W SMA/21W EMA). Justert outlook gjelder kun i post-topp-fasen. Base-rater, ikke sp&aring;dommer.</div>';
 }
 
 function drawOutlook() {
