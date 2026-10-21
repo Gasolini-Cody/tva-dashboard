@@ -255,24 +255,34 @@
   <div class="box chart-box">
     <h2>Sacred Timeline &mdash; Prishistorikk (log-skala + verdisettingskanal &agrave; la Raoul Pal)</h2>
     <div class="chart-controls">
-      <span class="chip on" data-aid="bitcoin">BTC</span>
-      <span class="chip on" data-aid="ethereum">ETH</span>
-      <span class="chip" data-aid="solana">SOL</span>
-      <span class="chip" data-aid="sui">SUI</span>
-      <span class="chip" data-aid="zcash">ZEC</span>
-      <span class="chip" data-aid="deepbook">DEEP</span>
-      <span class="chip" data-aid="walrus">WAL</span>
-      <span class="chip" data-aid="tao">TAO</span>
-      <span class="chip nftchip" data-aid="cryptopunks">PUNKS</span>
-      <span class="chip nftchip" data-aid="bayc">BAYC</span>
-      <span class="chip nftchip" data-aid="doodles">DOODLE</span>
-      <span class="chip nftchip" data-aid="dickbutts">DICK</span>
-      <span style="flex:1"></span>
-      <span class="chip range on" data-days="ALL">ALT</span>
-      <span class="chip range" data-days="1461">4&Aring;</span>
-      <span class="chip range" data-days="365">1&Aring;</span>
-      <span class="chip range" data-days="180">6M</span>
-      <span class="chip range" data-days="90">3M</span>
+      <div class="theme-select" id="assetSelect">
+        <button class="theme-btn" id="assetBtn" onclick="toggleAssetMenu(event)">&#9879; ASSET: <span id="assetSelName">BTC + ETH</span> &#9662;</button>
+        <div class="theme-menu" id="assetMenu">
+          <div class="theme-option" onclick="selectAssetMulti()">&#9879; BTC + ETH (standard)</div>
+          <div class="theme-option" onclick="selectAsset('bitcoin')">&#9679; Bitcoin (BTC)</div>
+          <div class="theme-option" onclick="selectAsset('ethereum')">&#9679; Ethereum (ETH)</div>
+          <div class="theme-option" onclick="selectAsset('solana')">&#9679; Solana (SOL)</div>
+          <div class="theme-option" onclick="selectAsset('sui')">&#9679; Sui (SUI)</div>
+          <div class="theme-option" onclick="selectAsset('zcash')">&#9679; Zcash (ZEC)</div>
+          <div class="theme-option" onclick="selectAsset('deepbook')">&#9679; DeepBook (DEEP)</div>
+          <div class="theme-option" onclick="selectAsset('walrus')">&#9679; Walrus (WAL)</div>
+          <div class="theme-option" onclick="selectAsset('tao')">&#9679; Bittensor (TAO)</div>
+          <div class="theme-option" onclick="selectAsset('cryptopunks')">&#9679; CryptoPunks [NFT]</div>
+          <div class="theme-option" onclick="selectAsset('bayc')">&#9679; Bored Ape YC [NFT]</div>
+          <div class="theme-option" onclick="selectAsset('doodles')">&#9679; Doodles [NFT]</div>
+          <div class="theme-option" onclick="selectAsset('dickbutts')">&#9679; CryptoDickbutts [NFT]</div>
+        </div>
+      </div>
+      <div class="theme-select" id="rangeSelect">
+        <button class="theme-btn" onclick="toggleRangeMenu(event)">&#9201; PERIODE: <span id="rangeSelName">ALT</span> &#9662;</button>
+        <div class="theme-menu" id="rangeMenu">
+          <div class="theme-option" onclick="selectRange('ALL')">ALT &mdash; all historikk</div>
+          <div class="theme-option" onclick="selectRange('1461')">4&Aring; &mdash; fire &aring;r</div>
+          <div class="theme-option" onclick="selectRange('365')">1&Aring; &mdash; ett &aring;r</div>
+          <div class="theme-option" onclick="selectRange('180')">6M &mdash; seks m&aring;neder</div>
+          <div class="theme-option" onclick="selectRange('90')">3M &mdash; tre m&aring;neder</div>
+        </div>
+      </div>
     </div>
     <div id="chartWrap">Laster hele prishistorikken (BTC siden 2011: Bitstamp + Binance)&hellip;</div>
   </div>
@@ -512,8 +522,14 @@ function drawChart() {
   const lmin = Math.log10(Math.min(...pts.map(x => x.p)));
   const lmax = Math.log10(Math.max(...pts.map(x => x.p))) || lmin + 1;
   const dates = [...new Set(all.map(x => x.d))].sort();
-  const d0 = new Date(dates[0]).getTime(), d1 = new Date(dates[dates.length - 1]).getTime();
-  const span = Math.max(d1 - d0, 86400000);
+  const dSelStart = new Date(dates[0]).getTime();
+  const dSelEnd = new Date(dates[dates.length - 1]).getTime();
+  // 2 aars kontekst foer og etter valgt periode:
+  const ctxMs = 2 * 365 * 86400000;
+  const today = Date.now();
+  const d0 = Math.max(dSelStart - ctxMs, new Date('2011-08-18').getTime());  // ikke foer BTC-epoken
+  const d1 = dSelEnd + ctxMs;  // prosesjonsrom fremover (kan gaa forbi dagens dato)
+  const span = d1 - d0;
   const X = d => P.l + (new Date(d).getTime() - d0) / span * iw;
   const Y = p => P.t + ih - (Math.log10(p) - lmin) / (lmax - lmin || 1) * ih;
 
@@ -533,7 +549,8 @@ function drawChart() {
     g += step;
   }
   for (let i = 0; i <= 4; i++) {
-    const di = dates[Math.floor(i * (dates.length - 1) / 4)] || dates[0];
+    const t = d0 + (d1 - d0) * i / 4;
+    const di = new Date(t).toISOString().slice(0, 10);
     svg += '<text x="' + X(di) + '" y="' + (H - 10) + '" fill="' + TC.axisText + '" font-size="10" text-anchor="middle">' + di.slice(2, 7) + '</text>';
   }
   const midY = P.t + ih / 2;
@@ -589,6 +606,18 @@ function drawChart() {
     });
     const last = series[series.length - 1];
     svg += '<circle cx="' + X(last.d).toFixed(1) + '" cy="' + Y(last.p).toFixed(1) + '" r="3.4" fill="' + TC.endNode + '" stroke="' + TC.nowLine + '" stroke-width="1" filter="url(#glow)"/>';
+  }
+  // valgt periode-markering: lyse vertikallinjer ved start/slutt av valgt vindu
+  if (chartState.days < 100000) {
+    const sx = X(dates[0]) >= P.l ? X(dates[0]) : P.l;
+    svg += '<line x1="' + sx.toFixed(1) + '" y1="' + (P.t - 8) + '" x2="' + sx.toFixed(1) + '" y2="' + (P.t + ih + 8) + '" stroke="' + TC.nowLine + '" stroke-width="1" stroke-dasharray="2 6" opacity="0.4"/>';
+    const ex = X(dates[dates.length - 1]);
+    if (ex < W - P.r) {
+      svg += '<line x1="' + ex.toFixed(1) + '" y1="' + (P.t - 8) + '" x2="' + ex.toFixed(1) + '" y2="' + (P.t + ih + 8) + '" stroke="' + TC.nowLine + '" stroke-width="1" stroke-dasharray="2 6" opacity="0.4"/>';
+      // prosesjonssone: skravert omrade fra valgt slutt til +2ar
+      svg += '<rect x="' + ex.toFixed(1) + '" y1="' + P.t + '" width="' + (W - P.r - ex).toFixed(1) + '" height="' + ih + '" fill="' + TC.gridLine + '" opacity="0.3"/>';
+      svg += '<text x="' + (ex + 8).toFixed(1) + '" y="' + (P.t + 16) + '" fill="' + TC.axisText + '" font-size="9" opacity="0.8">progresjon +2Å</text>';
+    }
   }
   const nowX = W - P.r - 2;
   svg += '<line x1="' + nowX + '" y1="' + (P.t - 8) + '" x2="' + nowX + '" y2="' + (P.t + ih + 8) + '" stroke="' + TC.nowLine + '" stroke-width="1.5" stroke-dasharray="5 5" opacity="0.85"/>';
@@ -871,21 +900,45 @@ function computeBacktest(days) {
   };
 }
 
-document.querySelectorAll('.chip').forEach(ch => {
-  ch.addEventListener('click', () => {
-    if (ch.dataset.days) {
-      document.querySelectorAll('.chip.range').forEach(c => c.classList.remove('on'));
-      ch.classList.add('on');
-      chartState.days = ch.dataset.days === 'ALL' ? 100000 : parseInt(ch.dataset.days);
-    } else {
-      const aid = ch.dataset.aid;
-      if (chartState.active.has(aid)) chartState.active.delete(aid);
-      else chartState.active.add(aid);
-      ch.classList.toggle('on', chartState.active.has(aid));
-    }
-    drawChart();
-  });
+// ===== DROPDOWN: ASSET + PERIODE =====
+function toggleAssetMenu(e) {
+  e.stopPropagation();
+  document.getElementById('assetMenu').classList.toggle('open');
+  document.getElementById('rangeMenu').classList.remove('open');
+}
+function toggleRangeMenu(e) {
+  e.stopPropagation();
+  document.getElementById('rangeMenu').classList.toggle('open');
+  document.getElementById('assetMenu').classList.remove('open');
+}
+// lukk begge ved klikk utenfor
+document.addEventListener('click', () => {
+  const am = document.getElementById('assetMenu');
+  const rm = document.getElementById('rangeMenu');
+  if (am) am.classList.remove('open');
+  if (rm) rm.classList.remove('open');
 });
+
+function selectAsset(aid) {
+  chartState.active = new Set([aid]);
+  const label = (ASSETS[aid] || NFTS[aid] || {}).name || aid;
+  document.getElementById('assetSelName').textContent = label.toUpperCase();
+  document.getElementById('assetMenu').classList.remove('open');
+  drawChart();
+}
+function selectAssetMulti() {
+  chartState.active = new Set(['bitcoin', 'ethereum']);
+  document.getElementById('assetSelName').textContent = 'BTC + ETH';
+  document.getElementById('assetMenu').classList.remove('open');
+  drawChart();
+}
+function selectRange(days) {
+  chartState.days = days === 'ALL' ? 100000 : parseInt(days);
+  const names = { ALL: 'ALT', 1461: '4Å', 365: '1Å', 180: '6M', 90: '3M' };
+  document.getElementById('rangeSelName').textContent = names[days] || days;
+  document.getElementById('rangeMenu').classList.remove('open');
+  drawChart();
+}
 
 loadTickers();
 loadHistory();
