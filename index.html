@@ -198,7 +198,7 @@ const NFTS = {
   cryptopunks: {cgId: 'cryptopunks', slug: 'cryptopunks', name: 'CryptoPunks', col: '#0a8f3c'},
   bayc:        {cgId: 'bored-ape-yacht-club', slug: 'bored-ape-yacht-club', name: 'Bored Ape YC', col: '#ff9100'},
   doodles:    {cgId: 'doodles-official', slug: 'doodles', name: 'Doodles', col: '#ff2a2a'},
-  dickbutts:  {cgId: 'bitcoin-crypto-dickbutts', slug: 'cryptodickbutts', name: 'Crypto DickButts', col: '#aa00ff'}
+  dickbutts:  {cgId: 'cryptodickbutts', slug: 'cryptodickbutts', name: 'CryptoDickbutts', col: '#aa00ff', chain: 'ETH'}
 };
 
 const ASSETS = {
@@ -241,7 +241,7 @@ async function loadNFTs() {
       const mcap = d.market_cap && d.market_cap.usd;
       const vol = d.volume_24h && d.volume_24h.usd;
       if (floor === undefined || floor === null) throw new Error('mangler floor');
-      rows.push('<tr><td style="color:' + n.col + '">&#9679; ' + n.name.toUpperCase() + ' <span style="font-size:10px;color:#111111">[NFT]</span></td>' +
+      rows.push('<tr><td style="color:' + n.col + '">&#9679; ' + n.name.toUpperCase() + ' <span style="font-size:10px;color:#111111">[NFT' + (n.chain ? ' ' + n.chain : '') + ']</span></td>' +
         '<td>$' + floor.toLocaleString('en-US', {maximumFractionDigits: floor < 100 ? 2 : 0}) + '</td>' +
         '<td>$' + (mcap ? Math.round(mcap).toLocaleString('en-US') : 'n/a') + '</td>' +
         '<td>$' + (vol ? Math.round(vol).toLocaleString('en-US') : 'n/a') + '</td></tr>');
