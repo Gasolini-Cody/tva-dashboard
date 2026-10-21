@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>TVA — Miss Minutes Investment Terminal</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap');
   /* Standardvariabler (TRON) — overstyres per tema */
   :root {
     --tron-cyan: #00d9ff; --tron-cyan-dim: #0891a8; --tron-orange: #ff8c1a;
@@ -171,6 +171,34 @@
     background: repeating-linear-gradient(0deg, rgba(0,0,0,.18) 0 1px, transparent 1px 3px);
     opacity: var(--scan-opacity);
   }
+  /* RETRO 50-talls tegnefilm-tema (UPA-stil) */
+  [data-theme="retro50"] {
+    --accent: #e8613c; --bg-deep: #f5e6c8; --panel-bg: #f5e6c8;
+    --text-dim: #3a2a1a;
+    --font-display: 'Alfa Slab One', serif;
+    --font-body: 'Rubik', sans-serif;
+    --logo-text: 'ZOOM!'; --logo-sub: 'RETRO MARKET TOON';
+    --bg-img: repeating-linear-gradient(45deg, rgba(58,42,26,.06) 0 3px, transparent 3px 9px);
+    --bg-size: auto;
+    --frame-border: 4px solid #3a2a1a;
+    --frame-shadow: 8px 8px 0 rgba(58,42,26,.85);
+    --frame-radius: 18px 4px 18px 4px;
+    --frame-bg: #f5e6c8;
+    --good-c: #4a7c59; --bad-c: #d94f30; --warn-c: #c98a00;
+    --box-border: 3px solid #3a2a1a;
+    --box-bg: #f0d9a8;
+    --chip-on-bg: #e8613c; --chip-on-color: #f5e6c8;
+    --scan-opacity: 0;
+    --avatar-bg: #f2b632; --avatar-color: #3a2a1a; --avatar-border: #3a2a1a;
+    --table-border: rgba(58,42,26,.35);
+  }
+  [data-theme="retro50"] .box { border-radius: 12px 3px 12px 3px; }
+  [data-theme="retro50"] .miss { border-radius: 14px 4px 14px 4px; background: #f2b632;
+    background-image: repeating-linear-gradient(-45deg, rgba(58,42,26,.07) 0 4px, transparent 4px 10px); }
+  [data-theme="retro50"] .chip { border-radius: 10px 3px 10px 3px; font-family: 'Rubik', sans-serif;
+    font-weight: 700; letter-spacing: .5px; }
+  [data-theme="retro50"] .logo { letter-spacing: 2px; -webkit-text-stroke: 1px #3a2a1a; }
+  [data-theme="retro50"] .box h2 { letter-spacing: 1.5px; }
   /* ===== MOBILTILPASNING ===== */
   @media (max-width: 768px) {
     body { padding: 8px; }
@@ -229,6 +257,7 @@
         <div class="theme-option" onclick="applyTheme('tron')">&#9889; TRON &mdash; Market Grid</div>
         <div class="theme-option" onclick="applyTheme('tva')">&#128216; TVA &mdash; Miss Minutes</div>
         <div class="theme-option" onclick="applyTheme('popart')">&#127912; POP-ART &mdash; POW!</div>
+        <div class="theme-option" onclick="applyTheme('retro50')">&#127917; RETRO 50s &mdash; ZOOM!</div>
       </div>
     </div>
     <div class="clock"><div class="big" id="clock">--:--</div>GRID-SYNK AKTIV <span class="blink">&#9679;</span></div>
@@ -768,6 +797,15 @@ const THEME_COLORS = {
               zcash: '#ff9100', deepbook: '#c0a0ff', walrus: '#aa00ff', tao: '#d50000',
               cryptopunks: '#0a8f3c', bayc: '#ff9100', doodles: '#ff2a2a', dickbutts: '#aa00ff' },
     good: '#0a8f3c', bad: '#ff2a2a', warn: '#c98a00'
+  },
+  retro50: {
+    chartBg: '#f0d9a8', gridLine: 'rgba(58,42,26,.2)', axisText: '#3a2a1a',
+    nowLine: '#3a2a1a', endNode: '#d94f30', eventNode: '#3a2a1a',
+    channel: '#e8613c',
+    assets: { bitcoin: '#d94f30', ethereum: '#4a9e9e', solana: '#4a7c59', sui: '#7bb2a3',
+              zcash: '#f2b632', deepbook: '#8e6fa8', walrus: '#b56a4a', tao: '#c9553c',
+              cryptopunks: '#4a7c59', bayc: '#f2b632', doodles: '#d94f30', dickbutts: '#8e6fa8' },
+    good: '#4a7c59', bad: '#d94f30', warn: '#c98a00'
   }
 };
 let CURRENT_THEME = 'tron';
@@ -793,14 +831,15 @@ function applyTheme(name) {
   CURRENT_THEME = name;
   document.documentElement.setAttribute('data-theme', name);
   try { localStorage.setItem('dashboard-theme', name); } catch (e) {}
-  const names = { tron: 'TRON', tva: 'TVA', popart: 'POP-ART' };
+  const names = { tron: 'TRON', tva: 'TVA', popart: 'POP-ART', retro50: 'RETRO 50s' };
   document.getElementById('themeName').textContent = names[name] || name;
   // logo-tekst per tema
   const logos = { tron: ['TRON', 'MARKET GRID &mdash; INVESTMENT DIVISION'],
                   tva: ['TVA', 'TIME VARIANCE AUTHORITY &mdash; INVESTMENT DIVISION'],
-                  popart: ['POW!', 'MARKET POP &mdash; INVESTMENT DIVISION'] };
+                  popart: ['POW!', 'MARKET POP &mdash; INVESTMENT DIVISION'],
+                  retro50: ['ZOOM!', 'RETRO MARKET TOON &mdash; INVESTMENT DIVISION'] };
   document.querySelector('.logo').innerHTML = logos[name][0] + '<small>' + logos[name][1] + '</small>';
-  const syncTexts = { tron: 'GRID-SYNK AKTIV', tva: 'CHRONO SYNC ACTIVE', popart: 'KRONO-SYNK' };
+  const syncTexts = { tron: 'GRID-SYNK AKTIV', tva: 'CHRONO SYNC ACTIVE', popart: 'KRONO-SYNK', retro50: 'KJÆRE SEER!' };
   const clockEl = document.querySelector('.clock');
   if (clockEl) clockEl.innerHTML = '<div class="big" id="clock">--:--</div>' + syncTexts[name] + ' <span class="blink">&#9679;</span>';
   const m = document.getElementById('themeMenu');
