@@ -1,4 +1,4 @@
-name: Oppdater NFT floor-historikk
+name: Oppdater NFT- og BTC-historikk
 on:
   schedule:
     - cron: "0 6 * * *"  # daglig kl 06 UTC
@@ -43,9 +43,55 @@ jobs:
                       print(f"{key} forsøk {attempt}: {e}")
                   time.sleep(10)
           EOF
+      - name: Hent BTC-historikk (Bitstamp 2011-2017 + Binance)
+        run: |
+          python3 - <<'EOF'
+          import requests, json, datetime as dt, time, os
+          # Bitstamp: 2011-08-18 -> 2017-08-17 (paginert, med pacing)
+          bit, start = [], 1312156800
+          for i in range(6):
+              for attempt in range(3):
+                  try:
+                      r = requests.get("https://www.bitstamp.net/api/v2/ohlc/btcusd/",
+                                       params={"step": 86400, "limit": 1000, "start": start}, timeout=30)
+                      j = r.json()
+                      if j.get("data", {}).get("ohlc"): break
+                  except Exception as e:
+                      print("bitstamp feil:", e)
+                  time.sleep(15)
+              o = (j.get("data") or {}).get("ohlc", [])
+              if not o: break
+              for x in o:
+                  t = int(x["timestamp"])
+                  if not bit or t > bit[-1]["t"]:
+                      bit.append({"t": t, "p": float(x["close"])})
+              last = bit[-1]["t"]
+              if last >= 1502928000: break
+              start = last
+              time.sleep(15)
+          print(f"Bitstamp: {len(bit)} punkter")
+          # Binance: 2017-08-17 ->
+          binance, bstart = [], 0
+          while True:
+              k = requests.get("https://api.binance.com/api/v3/klines",
+                               params={"symbol":"BTCUSDT","interval":"1d","startTime":bstart,"limit":1000}, timeout=30).json()
+              if not k: break
+              for x in k: binance.append({"t": x[0]//1000, "p": float(x[4])})
+              if len(k) < 1000: break
+              bstart = k[-1][0] + 1
+          print(f"Binance: {len(binance)} punkter")
+          first_bin = binance[0]["t"]
+          merged = [x for x in bit if x["t"] < first_bin] + binance
+          pts = [{"d": dt.datetime.fromtimestamp(x["t"], dt.timezone.utc).date().isoformat(), "p": round(x["p"], 2)} for x in merged]
+          gaps = sum(1 for i in range(1, len(pts))
+                     if (dt.date.fromisoformat(pts[i]["d"]) - dt.date.fromisoformat(pts[i-1]["d"])).days > 1)
+          print(f"BTC sammenlagt: {len(pts)} punkter | hull: {gaps}")
+          os.makedirs("data", exist_ok=True)
+          json.dump({"updated": dt.datetime.now(dt.timezone.utc).isoformat(), "points": pts}, open("data/btc.json", "w"))
+          EOF
       - name: Commit hvis endringer
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/nft/
-          git diff --staged --quiet || (git commit -m "Oppdaterer NFT floor-historikk [skip ci]" && git push)
+          git add data/
+          git diff --staged --quiet || (git commit -m "Oppdaterer NFT- og BTC-historikk [skip ci]" && git push)

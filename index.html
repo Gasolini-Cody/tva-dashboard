@@ -339,21 +339,12 @@ async function fetchAllKlines(sym) {
   return out;
 }
 
-async function fetchPrehistory() {
-  // Bitstamp BTCUSD: daglige OHLC tilbake til 2011-08-18 (per 1000-punkts sider)
-  let out = [], start = 1312156800, pages = 0;
-  while (pages++ < 4) {
-    const j = await jget('https://www.bitstamp.net/api/v2/ohlc/btcusd/?step=86400&limit=1000&start=' + start);
-    const ohlc = (j && j.data && j.data.ohlc) || [];
-    if (!ohlc.length) break;
-    const fresh = ohlc.filter(x => !out.length || Number(x.timestamp) > out[out.length - 1].t);
-    if (!fresh.length) break;
-    for (const x of fresh) out.push({ t: Number(x.timestamp), p: parseFloat(x.close) });
-    if (fresh.length < 1000) break;
-    start = fresh[fresh.length - 1].t;
-    await new Promise(r => setTimeout(r, 250));
-  }
-  return out;
+let btcFileData = null;
+async function loadBTCFile() {
+  // gap-fri BTC-historikk (2011->) fra repoet, daglig oppdatert av GitHub Actions
+  try {
+    btcFileData = await jget('data/btc.json');
+  } catch (e) { btcFileData = null; }
 }
 
 async function loadNFTHistory() {
@@ -368,6 +359,7 @@ async function loadNFTHistory() {
 
 async function loadHistory() {
   loadNFTHistory();
+  await loadBTCFile();
   for (const [aid, a] of Object.entries(ASSETS)) {
     try {
       if (a.bybit) {
@@ -384,16 +376,9 @@ async function loadHistory() {
         d: new Date(x[0]).toISOString().slice(0, 10),
         p: parseFloat(x[4])
       }));
-      if (aid === 'bitcoin') {
-        // BTC: utvid med Bitstamp-historikk fra 2011 (for Binance-epoken 2017-08-17)
-        try {
-          const pre = await fetchPrehistory();
-          const first = pts.length ? new Date(pts[0].d).getTime() / 1000 : Infinity;
-          const early = pre.filter(x => x.t < first - 86400).map(x => ({
-            d: new Date(x.t * 1000).toISOString().slice(0, 10), p: x.p
-          }));
-          pts = early.concat(pts);
-        } catch (e) { /* Bitstamp utilgjengelig: fortsett med Binance */ }
+      if (aid === 'bitcoin' && btcFileData) {
+        // BTC: bruk gap-fri historikk fra data/btc.json (2011->, daglig oppdatert av GitHub Actions)
+        pts = btcFileData.points.filter(x => x.p > 0);
       }
       chartState.data[aid] = pts;
     } catch (e) { chartState.data[aid] = []; }
@@ -524,7 +509,9 @@ function detectCycleTops(series) {
       ath = p;
       const nxt365 = series.slice(i + 1, i + 366).map(x => x.p);
       const nxt730 = series.slice(i + 1, i + 731).map(x => x.p);
-      if ((!nxt365.length || Math.max(...nxt365) <= p) && nxt730.length && Math.min(...nxt730) < p * 0.70) {
+      // gyldig topp: ikke overskredet pa 365 dager, og fallet >30% er synlig (krever minst 90 dager fremtid)
+      const falt = nxt730.length >= 90 && Math.min(...nxt730) < p * 0.70;
+      if ((!nxt365.length || Math.max(...nxt365) <= p) && falt) {
         tops.push({ d: series[i].d, p });
       }
     }
