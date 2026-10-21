@@ -125,6 +125,10 @@
       <span class="chip" data-aid="deepbook">DEEP</span>
       <span class="chip" data-aid="walrus">WAL</span>
       <span class="chip" data-aid="tao">TAO</span>
+      <span class="chip nftchip" data-aid="cryptopunks">PUNKS</span>
+      <span class="chip nftchip" data-aid="bayc">BAYC</span>
+      <span class="chip nftchip" data-aid="doodles">DOODLE</span>
+      <span class="chip nftchip" data-aid="dickbutts">DICK</span>
       <span style="flex:1"></span>
       <span class="chip range on" data-days="ALL">ALT</span>
       <span class="chip range" data-days="1461">4&Aring;</span>
@@ -158,10 +162,10 @@
 
 <script>
 const NFTS = {
-  cryptopunks: {cgId: 'cryptopunks', name: 'CryptoPunks', col: '#0a8f3c'},
-  bayc:        {cgId: 'bored-ape-yacht-club', name: 'Bored Ape YC', col: '#ff9100'},
-  doodles:    {cgId: 'doodles-official', name: 'Doodles', col: '#ff2a2a'},
-  dickbutts:  {cgId: 'bitcoin-crypto-dickbutts', name: 'Crypto DickButts', col: '#aa00ff'}
+  cryptopunks: {cgId: 'cryptopunks', slug: 'cryptopunks', name: 'CryptoPunks', col: '#0a8f3c'},
+  bayc:        {cgId: 'bored-ape-yacht-club', slug: 'bored-ape-yacht-club', name: 'Bored Ape YC', col: '#ff9100'},
+  doodles:    {cgId: 'doodles-official', slug: 'doodles', name: 'Doodles', col: '#ff2a2a'},
+  dickbutts:  {cgId: 'bitcoin-crypto-dickbutts', slug: 'cryptodickbutts', name: 'Crypto DickButts', col: '#aa00ff'}
 };
 
 const ASSETS = {
@@ -174,7 +178,15 @@ const ASSETS = {
   walrus:       {sym: 'WALUSDT', name: 'Walrus',    col: '#aa00ff', w: 5},
   tao:          {sym: 'TAOUSDT', name: 'Bittensor', col: '#d50000', w: 5}
 };
-const chartState = { active: new Set(['bitcoin','ethereum']), days: 100000, data: {} };
+const chartState = {
+  active: new Set(['bitcoin','ethereum']),
+  days: 100000,
+  data: {},
+  nftData: {},
+  seriesFor: function(aid) {
+    return this.data[aid] || this.nftData[aid] || [];
+  }
+};
 
 setInterval(() => {
   document.getElementById('clock').textContent = new Date().toLocaleTimeString('no-NO');
@@ -311,7 +323,18 @@ async function fetchPrehistory() {
   return out;
 }
 
+async function loadNFTHistory() {
+  // NFT-floor-historikk fra repoet (daglig oppdatert av GitHub Actions, kilde: nftpricefloor)
+  for (const nid of Object.keys(NFTS)) {
+    try {
+      const j = await jget('data/nft/' + nid + '.json');
+      chartState.nftData[nid] = (j && j.points) || [];
+    } catch (e) { chartState.nftData[nid] = []; }
+  }
+}
+
 async function loadHistory() {
+  loadNFTHistory();
   for (const [aid, a] of Object.entries(ASSETS)) {
     try {
       if (a.bybit) {
@@ -355,7 +378,7 @@ function drawChart() {
   const aids = [...chartState.active];
   let all = [];
   for (const aid of aids)
-    (chartState.data[aid] || []).slice(-chartState.days).forEach(x => all.push(x));
+    (chartState.seriesFor(aid) || []).slice(-chartState.days).forEach(x => all.push(x));
   if (!all.length) {
     document.getElementById('chartWrap').innerHTML = '<div style="padding:30px;color:#ffd23e">Ingen data &mdash; velg aktiver.</div>';
     return;
@@ -389,9 +412,9 @@ function drawChart() {
   }
   const midY = P.t + ih / 2;
   for (const aid of aids) {
-    const series = (chartState.data[aid] || []).slice(-chartState.days).filter(x => x.p > 0);
+    const series = (chartState.seriesFor(aid) || []).slice(-chartState.days).filter(x => x.p > 0);
     if (series.length < 2) continue;
-    const col = ASSETS[aid].col;
+    const col = (ASSETS[aid] || NFTS[aid] || {}).col;
     const path = 'M' + P.l + ',' + midY.toFixed(1)
       + ' C' + (P.l + iw * 0.08).toFixed(1) + ',' + midY.toFixed(1)
       + ' ' + (P.l + iw * 0.1).toFixed(1) + ',' + Y(series[0].p).toFixed(1)
@@ -446,11 +469,13 @@ function drawChart() {
   svg += '<text x="' + (nowX - 8) + '" y="' + (P.t - 12) + '" fill="#111111" font-size="11" text-anchor="end" letter-spacing="2">N\u00C5</text>';
   svg += '</svg>';
   const legend = aids.map(aid => {
-    const s = (chartState.data[aid] || []).slice(-chartState.days);
+    const s = (chartState.seriesFor(aid) || []).slice(-chartState.days);
     if (s.length < 2) return '';
+    const meta = ASSETS[aid] || NFTS[aid] || {col: '#111111', name: aid};
     const chg = (s[s.length - 1].p / s[0].p - 1) * 100;
-    return '<div style="margin:4px 12px 0 0;font-size:12px;color:' + ASSETS[aid].col + '">&#9679; ' +
-      ASSETS[aid].name.toUpperCase() + ' <span style="color:' + (chg >= 0 ? '#0a8f3c' : '#ff2a2a') + '">' +
+    return '<div style="margin:4px 12px 0 0;font-size:12px;color:' + meta.col + '">&#9679; ' +
+      meta.name.toUpperCase() + (NFTS[aid] ? ' <span style="font-size:10px;color:#111111">[NFT]</span>' : '') +
+      ' <span style="color:' + (chg >= 0 ? '#0a8f3c' : '#ff2a2a') + '">' +
       (chg >= 0 ? '+' : '') + chg.toFixed(1) + '% i perioden</span></div>';
   }).join('');
   document.getElementById('chartWrap').innerHTML = svg + '<div style="display:flex;flex-wrap:wrap">' + legend + '</div>';

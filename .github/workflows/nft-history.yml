@@ -1,0 +1,51 @@
+name: Oppdater NFT floor-historikk
+on:
+  schedule:
+    - cron: "0 6 * * *"  # daglig kl 06 UTC
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Hent NFT-floor-historikk
+        run: |
+          python3 - <<'EOF'
+          import requests, json, datetime as dt, time
+          slugs = {
+              "cryptopunks": "cryptopunks",
+              "bayc": "bored-ape-yacht-club",
+              "doodles": "doodles",
+              "dickbutts": "cryptodickbutts",
+          }
+          import os
+          os.makedirs("data/nft", exist_ok=True)
+          for key, slug in slugs.items():
+              for attempt in range(3):
+                  try:
+                      r = requests.get(f"https://api-bff.nftpricefloor.com/projects/{slug}/charts/all", timeout=30)
+                      if r.status_code == 200:
+                          d = r.json()
+                          pts = [{"d": dt.datetime.fromtimestamp(t/1000, dt.timezone.utc).date().isoformat(),
+                                  "p": round(p, 2)}
+                                 for t, p in zip(d["timestamps"], d["floorUsd"]) if p]
+                          out = {"slug": slug, "updated": dt.datetime.now(dt.timezone.utc).isoformat(), "points": pts}
+                          with open(f"data/nft/{key}.json", "w") as f:
+                              json.dump(out, f)
+                          print(f"{key}: {len(pts)} punkter oppdatert")
+                          break
+                  except Exception as e:
+                      print(f"{key} forsøk {attempt}: {e}")
+                  time.sleep(10)
+          EOF
+      - name: Commit hvis endringer
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/nft/
+          git diff --staged --quiet || (git commit -m "Oppdaterer NFT floor-historikk [skip ci]" && git push)
