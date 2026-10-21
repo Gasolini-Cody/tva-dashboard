@@ -355,6 +355,8 @@ async function loadNFTHistory() {
       chartState.nftData[nid] = (j && j.points) || [];
     } catch (e) { chartState.nftData[nid] = []; }
   }
+  // NFT-dataene er naa klare — tegn graf paa nytt hvis NFT-serier er valgt
+  if ([...chartState.active].some(aid => NFTS[aid])) drawChart();
 }
 
 async function loadHistory() {
