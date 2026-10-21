@@ -186,7 +186,9 @@
     .box { padding: 8px; }
     .box h2 { font-size: 11px; }
     .big { font-size: 19px; }
-    table { font-size: 11px; display: block; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+    table { font-size: 11px; table-layout: auto; }
+    /* skjul lavprioritetskolonner pa mobil (ingen horisontal scroll per tabell) */
+    .col-optional { display: none; }
     th, td { padding: 5px 8px; }
     .chart-box { padding: 8px; }
     .chart-controls { gap: 5px; margin: 6px 0; }
@@ -246,7 +248,7 @@
   </div>
 
   <div class="box" style="margin-top:14px"><h2>Aktiver p&aring; timeline</h2>
-    <table><thead><tr><th>Asset</th><th>Pris</th><th>24t</th><th>Fase (est.)</th></tr></thead>
+    <table><thead><tr><th>Asset</th><th>Pris</th><th>24t</th><th class="col-optional">Fase (est.)</th></tr></thead>
     <tbody id="assetRows"><tr><td colspan="4">Henter live priser&hellip;</td></tr></tbody></table>
   </div>
 
@@ -276,7 +278,7 @@
   </div>
 
   <div class="box" style="margin-top:14px"><h2>NFT-galleriet &mdash; floor prices</h2>
-    <table><thead><tr><th>Samling</th><th>Floor</th><th>Markedsverdi</th><th>24t volum</th></tr></thead>
+    <table><thead><tr><th>Samling</th><th>Floor</th><th>Markedsverdi</th><th class="col-optional">24t volum</th></tr></thead>
     <tbody id="nftRows"><tr><td colspan="4">Henter NFT-floor prices&hellip;</td></tr></tbody></table>
   </div>
 
@@ -347,7 +349,7 @@ async function loadNFTs() {
       rows.push('<tr><td style="color:' + n.col + '">&#9679; ' + n.name.toUpperCase() + ' <span style="font-size:10px;color:#0891a8">[NFT' + (n.chain ? ' ' + n.chain : '') + ']</span></td>' +
         '<td>$' + floor.toLocaleString('en-US', {maximumFractionDigits: floor < 100 ? 2 : 0}) + '</td>' +
         '<td>$' + (mcap ? Math.round(mcap).toLocaleString('en-US') : 'n/a') + '</td>' +
-        '<td>$' + (vol ? Math.round(vol).toLocaleString('en-US') : 'n/a') + '</td></tr>');
+        '<td class="col-optional">$' + (vol ? Math.round(vol).toLocaleString('en-US') : 'n/a') + '</td></tr>');
     } catch (e) {
       rows.push('<tr><td style="color:' + n.col + '">&#9679; ' + n.name.toUpperCase() + ' <span style="font-size:10px;color:#0891a8">[NFT]</span></td>' +
         '<td colspan="3" class="warn">Ikke tilgjengelig (' + e.message.slice(0, 40) + ')</td></tr>');
@@ -380,7 +382,7 @@ async function loadTickers() {
       rows.push('<tr><td>' + a.name.toUpperCase() + '</td><td>$' +
         price.toLocaleString('en-US', {maximumFractionDigits: price < 10 ? 4 : 2}) +
         '</td><td class="' + (chg >= 0 ? 'good' : 'bad') + '">' +
-        (chg >= 0 ? '+' : '') + chg.toFixed(1) + '%</td><td>' + phase + '</td></tr>');
+        (chg >= 0 ? '+' : '') + chg.toFixed(1) + '%</td><td class="col-optional">' + phase + '</td></tr>');
     } catch (e) {
       rows.push('<tr><td>' + a.name.toUpperCase() + '</td><td colspan="3" class="warn">Feil: ' + e.message + '</td></tr>');
     }
@@ -696,10 +698,10 @@ function drawCowen() {
       '<span class="bad">ned ' + Math.min(100, pAllD * fDn).toFixed(0) + '%</span></div>' : '';
 
   document.getElementById('cowenWrap').innerHTML =
-    '<table style="width:100%"><tr><th>Syklustopper</th><th>Baserate opp/ned</th><th>&Aring;r etter topp</th><th>Posisjon n&aring;</th></tr>' +
+    '<table style="width:100%"><tr><th>Syklustopper</th><th>Baserate opp/ned</th><th class="col-optional">&Aring;r etter topp</th><th>Posisjon n&aring;</th></tr>' +
     '<tr><td style="font-size:12px">' + topList + '</td>' +
     '<td><span class="good">' + pAllU.toFixed(0) + '%</span> / <span class="bad">' + pAllD.toFixed(0) + '%</span></td>' +
-    '<td><span class="good">' + pB_U.toFixed(0) + '%</span> / <span class="bad">' + pB_D.toFixed(0) + '%</span> <span style="font-size:11px">(n=' + nB + ')</span></td>' +
+    '<td class="col-optional"><span class="good">' + pB_U.toFixed(0) + '%</span> / <span class="bad">' + pB_D.toFixed(0) + '%</span> <span style="font-size:11px">(n=' + nB + ')</span></td>' +
     '<td>' + (daysAfter ? daysAfter.dd + ' d etter topp ' + daysAfter.t.d.slice(0, 7) + (inPostNow ? ' <span class="bad">&mdash; POST-TOPP</span>' : '') : 'ikke i post-topp-fase') + '</td></tr></table>' +
     '<div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px">' +
     '<div style="font-size:13px">Risikometrisk: <span style="color:' + (risk.risk01 > 0.6 ? '#ff8c1a' : risk.risk01 < 0.4 ? '#2eff9e' : '#ffe733') + '">' + risk.risk01.toFixed(2) + '</span> <span style="font-size:11px">(0 = billig, 1 = dyrt; z=' + risk.zNow.toFixed(2) + ')</span></div>' +
@@ -808,14 +810,14 @@ function drawOutlook() {
   }
   const bar = (pct, col) => '<div style="height:14px;width:' + Math.max(pct, 0.5).toFixed(1) + '%;background:' + col + '"></div>';
   document.getElementById('outlookWrap').innerHTML =
-    '<table style="width:100%"><tr><th>Asset</th><th>Opp &gt;+15%</th><th>Flat &plusmn;15%</th><th>Ned &gt;-15%</th><th>Snitt opp/ned</th><th>Historiske perioder</th></tr>' +
+    '<table style="width:100%"><tr><th>Asset</th><th>Opp &gt;+15%</th><th>Flat &plusmn;15%</th><th>Ned &gt;-15%</th><th class="col-optional">Snitt opp/ned</th><th class="col-optional">Historiske perioder</th></tr>' +
     rows.map(r =>
       '<tr><td style="color:' + r.col + '">&#9679; ' + r.name + '</td>' +
       '<td class="good">' + r.pUp.toFixed(0) + '%</td>' +
       '<td class="warn">' + r.pFlat.toFixed(0) + '%</td>' +
       '<td class="bad">' + r.pDown.toFixed(0) + '%</td>' +
-      '<td>+' + r.avgUp.toFixed(0) + '% / ' + r.avgDn.toFixed(0) + '%</td>' +
-      '<td style="color:#0891a8">' + r.n + '</td></tr>').join('') +
+      '<td class="col-optional">+' + r.avgUp.toFixed(0) + '% / ' + r.avgDn.toFixed(0) + '%</td>' +
+      '<td class="col-optional">' + r.n + '</td></tr>').join('') +
     '</table>' +
     '<div style="font-size:11px;color:#0891a8;margin-top:6px">Sannsynligheter = historisk andel 6-m&aring;neders perioder (slag-i-slag, hele tilgjengelige historikk) per utfallskategori. ' +
     'Base-rater, ikke sp&aring;dommer &mdash; markedet kan ikke forutsis sikkert. Grense: &plusmn;15 %.</div>';
