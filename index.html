@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>TVA — Miss Minutes Investment Terminal</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Bangers&family=Archivo+Black&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Rubik:ital,wght@0,400;0,500;0,700;1,400&display=swap');
   :root {
     --pop-red: #ff2a2a;
     --pop-yellow: #ffe733;
@@ -22,7 +22,7 @@
       radial-gradient(circle at 85% 30%, rgba(255,231,51,.35) 0 6px, transparent 7px);
     background-size: 42px 42px, 56px 56px, 64px 64px;
     color: var(--pop-ink);
-    font-family: 'Archivo Black', 'Arial Black', sans-serif;
+    font-family: 'Rubik', 'Segoe UI', sans-serif;
     padding: 18px;
   }
   .frame {
@@ -33,14 +33,14 @@
   }
   header { display: flex; justify-content: space-between; align-items: center;
     border-bottom: 4px solid var(--pop-ink); padding-bottom: 10px; margin-bottom: 14px; }
-  .logo { font-family: 'Bangers', cursive; font-size: 44px; letter-spacing: 3px;
+  .logo { font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 40px; letter-spacing: 3px;
     color: var(--pop-red);
     text-shadow: 3px 3px 0 var(--pop-ink);
     -webkit-text-stroke: 1.5px var(--pop-ink); }
-  .logo small { display: block; font-family: 'Archivo Black', sans-serif; font-size: 10px;
+  .logo small { display: block; font-family: 'Rubik', sans-serif; font-weight: 500; font-size: 10px;
     letter-spacing: 3px; color: var(--pop-ink); -webkit-text-stroke: 0; text-shadow: none; }
   .clock { text-align: right; font-size: 12px; color: var(--pop-ink); }
-  .clock .big { font-family: 'Bangers', cursive; font-size: 28px; color: var(--pop-blue);
+  .clock .big { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 24px; color: var(--pop-blue);
     text-shadow: 2px 2px 0 var(--pop-ink); letter-spacing: 2px; }
   .miss { display: flex; gap: 14px; align-items: center; margin-bottom: 14px;
     background: var(--pop-yellow);
@@ -52,24 +52,24 @@
     background: var(--pop-red); color: var(--pop-cream);
     border: 3px solid var(--pop-ink);
     display: flex; align-items: center; justify-content: center;
-    font-family: 'Bangers', cursive; font-weight: 600; font-size: 22px;
+    font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 20px;
     box-shadow: 3px 3px 0 var(--pop-ink); }
-  .speech { font-size: 14px; font-style: italic; font-family: 'Archivo Black', sans-serif; }
+  .speech { font-size: 14px; font-style: italic; font-family: 'Rubik', sans-serif; font-weight: 500; line-height: 1.45; }
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
   .box { border: 3px solid var(--pop-ink); border-radius: 4px;
     padding: 12px; background: var(--pop-cream);
     box-shadow: 4px 4px 0 var(--pop-ink); }
-  .box h2 { font-family: 'Bangers', cursive; font-size: 17px; letter-spacing: 1.5px;
+  .box h2 { font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 15px; letter-spacing: 1.5px;
     color: var(--pop-blue); text-transform: uppercase; margin-bottom: 8px;
     border-bottom: 3px solid var(--pop-ink); padding-bottom: 4px;
     text-shadow: 1.5px 1.5px 0 var(--pop-ink); }
-  .big { font-size: 26px; color: var(--pop-ink); }
+  .big { font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 24px; color: var(--pop-ink); }
   .good { color: #0a8f3c; }
   .bad { color: var(--pop-red); }
   .warn { color: #c98a00; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   th, td { border-bottom: 2px solid var(--pop-ink); padding: 5px 6px; text-align: left; }
-  th { color: var(--pop-red); font-family: 'Bangers', cursive; font-size: 15px; letter-spacing: 1px; }
+  th { color: var(--pop-red); font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 13px; letter-spacing: .5px; }
   .chart-box { margin-top: 14px; position: relative;
     background: var(--pop-cream);
     border: 3px solid var(--pop-ink);
@@ -77,17 +77,17 @@
     background-size: 20px 20px; }
   .chart-controls { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
   .chip { padding: 3px 12px; border-radius: 14px; font-size: 13px;
-    font-family: 'Bangers', cursive; letter-spacing: 1px;
+    font-family: 'Fredoka', sans-serif; font-weight: 600; letter-spacing: .5px;
     border: 2.5px solid var(--pop-ink); cursor: pointer; user-select: none;
     color: var(--pop-ink); background: var(--pop-cream);
     box-shadow: 2.5px 2.5px 0 var(--pop-ink); }
   .chip.on { background: var(--pop-yellow); transform: translate(1px,1px); box-shadow: 1.5px 1.5px 0 var(--pop-ink); }
   .chip:active { transform: translate(2px,2px); box-shadow: .5px .5px 0 var(--pop-ink); }
   .chip.range.on { background: var(--pop-red); color: var(--pop-cream); }
-  svg text { font-family: 'Archivo Black', sans-serif; }
+  svg text { font-family: 'Rubik', sans-serif; }
   #chartWrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   footer { margin-top: 16px; font-size: 11px; color: var(--pop-ink); text-align: center;
-    font-family: 'Archivo Black', sans-serif; }
+    font-family: 'Rubik', sans-serif; font-weight: 400; line-height: 1.5; }
   .blink { animation: blink 1.2s steps(2) infinite; }
   @keyframes blink { 50% { opacity: .25; } }
 
