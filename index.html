@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>TVA — Miss Minutes Investment Terminal</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Monoton&family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap');
   /* Standardvariabler (TRON) — overstyres per tema */
   :root {
     --tron-cyan: #00d9ff; --tron-cyan-dim: #0891a8; --tron-orange: #ff8c1a;
@@ -199,6 +199,33 @@
     font-weight: 700; letter-spacing: .5px; }
   [data-theme="retro50"] .logo { letter-spacing: 2px; -webkit-text-stroke: 1px #3a2a1a; }
   [data-theme="retro50"] .box h2 { letter-spacing: 1.5px; }
+  /* RETRO 80-talls synthwave-tema */
+  [data-theme="retro80"] {
+    --accent: #ff2a97; --bg-deep: #120726; --panel-bg: rgba(38,16,74,.97);
+    --text-dim: #c9b8ff;
+    --font-display: 'Monoton', cursive;
+    --font-body: 'Share Tech Mono', monospace;
+    --logo-text: 'NEON'; --logo-sub: 'SYNTHWAVE MARKET';
+    --bg-img: linear-gradient(rgba(255,42,151,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,42,151,.05) 1px, transparent 1px), linear-gradient(180deg, transparent 60%, rgba(255,42,151,.14));
+    --bg-size: 40px 40px, 40px 40px, auto;
+    --frame-border: 2px solid #ff2a97;
+    --frame-shadow: 0 0 30px rgba(255,42,151,.4), 0 0 80px rgba(42,217,255,.15), inset 0 0 60px rgba(255,42,151,.06);
+    --frame-radius: 4px;
+    --frame-bg: linear-gradient(180deg, #120726, #1d0b3a 70%, #2a0f54);
+    --good-c: #2eff9e; --bad-c: #ff5e5e; --warn-c: #ffe733;
+    --box-border: 1px solid rgba(255,42,151,.45);
+    --box-bg: rgba(38,16,74,.75);
+    --chip-on-bg: #ff2a97; --chip-on-color: #120726;
+    --scan-opacity: .35;
+    --avatar-bg: transparent; --avatar-color: #ff2a97; --avatar-border: #ff2a97;
+    --table-border: rgba(201,184,255,.25);
+  }
+  [data-theme="retro80"] .box h2 { color: #2ad4ff; text-shadow: 0 0 8px rgba(42,212,255,.6); }
+  [data-theme="retro80"] .logo { font-weight: 400; letter-spacing: 6px;
+    background: linear-gradient(180deg, #2ad4ff, #ff2a97);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    text-shadow: none; filter: drop-shadow(0 0 12px rgba(255,42,151,.6)); }
+  [data-theme="retro80"] .chip.range.on { background: #2ad4ff; color: #120726; border-color: #2ad4ff; box-shadow: 0 0 14px rgba(42,212,255,.7); }
   /* ===== MOBILTILPASNING ===== */
   @media (max-width: 768px) {
     body { padding: 8px; }
@@ -258,6 +285,7 @@
         <div class="theme-option" onclick="applyTheme('tva')">&#128216; TVA &mdash; Miss Minutes</div>
         <div class="theme-option" onclick="applyTheme('popart')">&#127912; POP-ART &mdash; POW!</div>
         <div class="theme-option" onclick="applyTheme('retro50')">&#127917; RETRO 50s &mdash; ZOOM!</div>
+        <div class="theme-option" onclick="applyTheme('retro80')">&#128640; RETRO 80s &mdash; NEON</div>
       </div>
     </div>
     <div class="clock"><div class="big" id="clock">--:--</div>GRID-SYNK AKTIV <span class="blink">&#9679;</span></div>
@@ -806,6 +834,15 @@ const THEME_COLORS = {
               zcash: '#f2b632', deepbook: '#8e6fa8', walrus: '#b56a4a', tao: '#c9553c',
               cryptopunks: '#4a7c59', bayc: '#f2b632', doodles: '#d94f30', dickbutts: '#8e6fa8' },
     good: '#4a7c59', bad: '#d94f30', warn: '#c98a00'
+  },
+  retro80: {
+    chartBg: '#0d0518', gridLine: 'rgba(255,42,151,.16)', axisText: '#8a6fc9',
+    nowLine: '#e8dcff', endNode: '#2ad4ff', eventNode: '#e8dcff',
+    channel: '#ff2a97',
+    assets: { bitcoin: '#ff2a97', ethereum: '#2ad4ff', solana: '#2eff9e', sui: '#00e5c7',
+              zcash: '#ffe733', deepbook: '#b56aff', walrus: '#ff8c1a', tao: '#ff5e5e',
+              cryptopunks: '#2eff9e', bayc: '#ff8c1a', doodles: '#ff5e8a', dickbutts: '#b56aff' },
+    good: '#2eff9e', bad: '#ff5e5e', warn: '#ffe733'
   }
 };
 let CURRENT_THEME = 'tron';
@@ -831,15 +868,16 @@ function applyTheme(name) {
   CURRENT_THEME = name;
   document.documentElement.setAttribute('data-theme', name);
   try { localStorage.setItem('dashboard-theme', name); } catch (e) {}
-  const names = { tron: 'TRON', tva: 'TVA', popart: 'POP-ART', retro50: 'RETRO 50s' };
+  const names = { tron: 'TRON', tva: 'TVA', popart: 'POP-ART', retro50: 'RETRO 50s', retro80: 'RETRO 80s' };
   document.getElementById('themeName').textContent = names[name] || name;
   // logo-tekst per tema
   const logos = { tron: ['TRON', 'MARKET GRID &mdash; INVESTMENT DIVISION'],
                   tva: ['TVA', 'TIME VARIANCE AUTHORITY &mdash; INVESTMENT DIVISION'],
                   popart: ['POW!', 'MARKET POP &mdash; INVESTMENT DIVISION'],
-                  retro50: ['ZOOM!', 'RETRO MARKET TOON &mdash; INVESTMENT DIVISION'] };
+                  retro50: ['ZOOM!', 'RETRO MARKET TOON &mdash; INVESTMENT DIVISION'],
+                  retro80: ['NEON', 'SYNTHWAVE MARKET &mdash; INVESTMENT DIVISION'] };
   document.querySelector('.logo').innerHTML = logos[name][0] + '<small>' + logos[name][1] + '</small>';
-  const syncTexts = { tron: 'GRID-SYNK AKTIV', tva: 'CHRONO SYNC ACTIVE', popart: 'KRONO-SYNK', retro50: 'KJÆRE SEER!' };
+  const syncTexts = { tron: 'GRID-SYNK AKTIV', tva: 'CHRONO SYNC ACTIVE', popart: 'KRONO-SYNK', retro50: 'KJÆRE SEER!', retro80: 'TOTAULT 1984' };
   const clockEl = document.querySelector('.clock');
   if (clockEl) clockEl.innerHTML = '<div class="big" id="clock">--:--</div>' + syncTexts[name] + ' <span class="blink">&#9679;</span>';
   const m = document.getElementById('themeMenu');
