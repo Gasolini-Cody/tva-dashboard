@@ -679,10 +679,22 @@ function drawChart() {
     svg += '<text x="' + (P.l - 10) + '" y="' + (y + 4) + '" fill="' + TC.axisText + '" font-size="10" text-anchor="end">' + label + '</text>';
     g += step;
   }
-  for (let i = 0; i <= 4; i++) {
-    const t = d0 + (d1 - d0) * i / 4;
-    const di = new Date(t).toISOString().slice(0, 10);
-    svg += '<text x="' + X(di) + '" y="' + (H - 10) + '" fill="' + TC.axisText + '" font-size="10" text-anchor="middle">' + di.slice(2, 7) + '</text>';
+  // Tidsmerker: 8 punkter med vertikale hjelpelinjer, maaned + aarstall
+  const nMarks = 8;
+  for (let i = 0; i < nMarks; i++) {
+    const t = d0 + (d1 - d0) * i / (nMarks - 1);
+    const dObj = new Date(t);
+    const di = dObj.toISOString().slice(0, 10);
+    const px = X(di);
+    // vertikal hjelpelinje gjennom hele grafen
+    if (px >= P.l && px <= W - P.r) {
+      svg += '<line x1="' + px.toFixed(1) + '" y1="' + (P.t - 4) + '" x2="' + px.toFixed(1) + '" y2="' + (P.t + ih + 4) + '" stroke="' + TC.gridLine + '" stroke-width="1" opacity="0.55"/>';
+    }
+    // maaned (storre) + aarstall (mindre under)
+    const mnd = ['JAN','FEB','MAR','APR','MAI','JUN','JUL','AUG','SEP','OKT','NOV','DES'][dObj.getUTCMonth()];
+    const aar = dObj.getUTCFullYear();
+    svg += '<text x="' + px.toFixed(1) + '" y="' + (H - 20) + '" fill="' + TC.axisText + '" font-size="10" font-weight="bold" text-anchor="middle">' + mnd + '</text>';
+    svg += '<text x="' + px.toFixed(1) + '" y="' + (H - 7) + '" fill="' + TC.axisText + '" font-size="9" opacity="0.85" text-anchor="middle">' + aar + '</text>';
   }
   const midY = P.t + ih / 2;
   for (const aid of aids) {
