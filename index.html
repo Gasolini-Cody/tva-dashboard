@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>TVA — Miss Minutes Investment Terminal</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Monoton&family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Monoton&family=Orbitron:wght@500;700;900&family=Press+Start+2P&family=Share+Tech+Mono&family=VT323&display=swap');
   /* Standardvariabler (TRON) — overstyres per tema */
   :root {
     --tron-cyan: #00d9ff; --tron-cyan-dim: #0891a8; --tron-orange: #ff8c1a;
@@ -226,6 +226,78 @@
     -webkit-background-clip: text; background-clip: text; color: transparent;
     text-shadow: none; filter: drop-shadow(0 0 12px rgba(255,42,151,.6)); }
   [data-theme="retro80"] .chip.range.on { background: #2ad4ff; color: #120726; border-color: #2ad4ff; box-shadow: 0 0 14px rgba(42,212,255,.7); }
+  /* pixel-dekorasjoner (8-bit) */
+  #pixelDeco { font-family: 'Press Start 2P', monospace; font-size: 8px; margin-top: 6px; }
+  #pixelDeco .okbtn {
+    display: inline-block; background: #00FF00; color: #000000;
+    border: 3px solid #FFFFFF; padding: 2px 10px; margin-left: 8px; cursor: pointer;
+    font-family: 'Press Start 2P', monospace;
+  }
+  /* RETRO 8-bit pixel-art-tema (MS-DOS / arkade) */
+  [data-theme="retro8bit"], [data-theme="retro8bit"] * {
+    border-radius: 0 !important; box-shadow: none !important;
+    text-shadow: none !important; filter: none !important;
+  }
+  [data-theme="retro8bit"] {
+    --accent: #FFFF00; --bg-deep: #000000; --panel-bg: #000000;
+    --text-dim: #00FFFF;
+    --font-display: 'Press Start 2P', monospace;
+    --font-body: 'VT323', monospace;
+    --logo-text: 'BYTE'; --logo-sub: '8-BIT MARKET SYSTEM';
+    --bg-img: repeating-linear-gradient(0deg, rgba(0,0,255,.12) 0 2px, transparent 2px 8px);
+    --bg-size: auto;
+    --frame-border: 4px solid #00FFFF;
+    --frame-shadow: 8px 8px 0 #0000FF;
+    --frame-radius: 0;
+    --frame-bg: #000000;
+    --good-c: #00FF00; --bad-c: #FF00FF; --warn-c: #FFFF00;
+    --box-border: 3px solid #FFFF00;
+    --box-bg: #0000AA;
+    --chip-on-bg: #FFFF00; --chip-on-color: #000000;
+    --scan-opacity: 0;
+    --avatar-bg: #FF00FF; --avatar-color: #000000; --avatar-border: #00FFFF;
+    --table-border: #00FFFF;
+  }
+  [data-theme="retro8bit"] .logo {
+    color: #FFFF00;
+    background: #0000AA;
+    padding: 6px 10px;
+    border: 3px solid #00FFFF;
+    display: inline-block;
+  }
+  [data-theme="retro8bit"] .logo small { color: #00FFFF; }
+  [data-theme="retro8bit"] .box h2 {
+    background: #0000AA; color: #00FFFF;
+    border: 2px solid #00FFFF; border-bottom: 2px solid #00FFFF;
+    padding: 4px 6px; display: inline-block; margin-bottom: 10px;
+    font-size: 10px;
+  }
+  [data-theme="retro8bit"] .chip {
+    border: 3px solid #00FFFF; color: #00FFFF; background: #000000;
+    font-family: 'Press Start 2P', monospace; font-size: 9px; letter-spacing: 0;
+    transition: none;
+  }
+  [data-theme="retro8bit"] .chip:hover { background: #0000AA; box-shadow: none; }
+  [data-theme="retro8bit"] .chip.on { background: #FFFF00; color: #000000; border-color: #FFFF00; }
+  [data-theme="retro8bit"] .chip.range.on { background: #FF00FF; color: #000000; border-color: #FF00FF; }
+  [data-theme="retro8bit"] .miss {
+    background: #000000; border: 4px double #00FFFF;
+  }
+  [data-theme="retro8bit"] .avatar { border-radius: 0 !important; }
+  [data-theme="retro8bit"] .speech { font-size: 18px; font-family: 'VT323', monospace; color: #00FF00; }
+  [data-theme="retro8bit"] .big { font-size: 18px; }
+  [data-theme="retro8bit"] .theme-btn {
+    font-family: 'Press Start 2P', monospace; font-size: 8px;
+    border: 3px solid #FFFF00; color: #FFFF00; background: #0000AA;
+  }
+  [data-theme="retro8bit"] .theme-menu { border: 3px solid #FFFF00; background: #0000AA; }
+  [data-theme="retro8bit"] .theme-option { color: #00FFFF; font-family: 'VT323', monospace; font-size: 16px; }
+  [data-theme="retro8bit"] .theme-option:hover { background: #FFFF00; color: #000000; }
+  [data-theme="retro8bit"] table { font-family: 'VT323', monospace; font-size: 15px; }
+  [data-theme="retro8bit"] th { font-family: 'Press Start 2P', monospace; font-size: 8px; }
+  [data-theme="retro8bit"] .clock .big { font-family: 'Press Start 2P', monospace; color: #FFFF00; font-size: 16px; }
+  [data-theme="retro8bit"] .clock { color: #00FFFF; font-family: 'VT323', monospace; }
+  [data-theme="retro8bit"] footer { font-family: 'VT323', monospace; color: #00FFFF; font-size: 15px; }
   /* ===== MOBILTILPASNING ===== */
   @media (max-width: 768px) {
     body { padding: 8px; }
@@ -286,6 +358,7 @@
         <div class="theme-option" onclick="applyTheme('popart')">&#127912; POP-ART &mdash; POW!</div>
         <div class="theme-option" onclick="applyTheme('retro50')">&#127917; RETRO 50s &mdash; ZOOM!</div>
         <div class="theme-option" onclick="applyTheme('retro80')">&#128640; RETRO 80s &mdash; NEON</div>
+        <div class="theme-option" onclick="applyTheme('retro8bit')">&#128187; 8-BIT &mdash; ARCADE DOS</div>
       </div>
     </div>
     <div class="clock"><div class="big" id="clock">--:--</div>GRID-SYNK AKTIV <span class="blink">&#9679;</span></div>
@@ -295,6 +368,7 @@
   <div class="miss">
     <div class="avatar">MM</div>
     <div class="speech" id="speech">Analyserer markedet&hellip;</div>
+      <div id="pixelDeco" style="width:100%"></div>
   </div>
 
   <div class="grid">
@@ -843,6 +917,15 @@ const THEME_COLORS = {
               zcash: '#ffe733', deepbook: '#b56aff', walrus: '#ff8c1a', tao: '#ff5e5e',
               cryptopunks: '#2eff9e', bayc: '#ff8c1a', doodles: '#ff5e8a', dickbutts: '#b56aff' },
     good: '#2eff9e', bad: '#ff5e5e', warn: '#ffe733'
+  },
+  retro8bit: {
+    chartBg: '#000000', gridLine: 'rgba(0,255,255,.35)', axisText: '#00FFFF',
+    nowLine: '#FFFFFF', endNode: '#FFFF00', eventNode: '#FFFFFF',
+    channel: '#FF00FF',
+    assets: { bitcoin: '#FFFF00', ethereum: '#00FFFF', solana: '#00FF00', sui: '#00FFAA',
+              zcash: '#FFFFFF', deepbook: '#AA00FF', walrus: '#FF8800', tao: '#FF0055',
+              cryptopunks: '#00FF00', bayc: '#FF8800', doodles: '#FF00FF', dickbutts: '#AA00FF' },
+    good: '#00FF00', bad: '#FF00FF', warn: '#FFFF00'
   }
 };
 let CURRENT_THEME = 'tron';
@@ -868,18 +951,26 @@ function applyTheme(name) {
   CURRENT_THEME = name;
   document.documentElement.setAttribute('data-theme', name);
   try { localStorage.setItem('dashboard-theme', name); } catch (e) {}
-  const names = { tron: 'TRON', tva: 'TVA', popart: 'POP-ART', retro50: 'RETRO 50s', retro80: 'RETRO 80s' };
+  const names = { tron: 'TRON', tva: 'TVA', popart: 'POP-ART', retro50: 'RETRO 50s', retro80: 'RETRO 80s', retro8bit: '8-BIT' };
   document.getElementById('themeName').textContent = names[name] || name;
   // logo-tekst per tema
   const logos = { tron: ['TRON', 'MARKET GRID &mdash; INVESTMENT DIVISION'],
                   tva: ['TVA', 'TIME VARIANCE AUTHORITY &mdash; INVESTMENT DIVISION'],
                   popart: ['POW!', 'MARKET POP &mdash; INVESTMENT DIVISION'],
                   retro50: ['ZOOM!', 'RETRO MARKET TOON &mdash; INVESTMENT DIVISION'],
-                  retro80: ['NEON', 'SYNTHWAVE MARKET &mdash; INVESTMENT DIVISION'] };
+                  retro80: ['NEON', 'SYNTHWAVE MARKET &mdash; INVESTMENT DIVISION'],
+                  retro8bit: ['BYTE', '8-BIT MARKET SYSTEM &mdash; DOS SHELL'] };
   document.querySelector('.logo').innerHTML = logos[name][0] + '<small>' + logos[name][1] + '</small>';
-  const syncTexts = { tron: 'GRID-SYNK AKTIV', tva: 'CHRONO SYNC ACTIVE', popart: 'KRONO-SYNK', retro50: 'KJÆRE SEER!', retro80: 'TOTAULT 1984' };
+  const syncTexts = { tron: 'GRID-SYNK AKTIV', tva: 'CHRONO SYNC ACTIVE', popart: 'KRONO-SYNK', retro50: 'KJÆRE SEER!', retro80: 'TOTAULT 1984', retro8bit: 'C:\\ &gt; SYNK.EXE' };
   const clockEl = document.querySelector('.clock');
   if (clockEl) clockEl.innerHTML = '<div class="big" id="clock">--:--</div>' + syncTexts[name] + ' <span class="blink">&#9679;</span>';
+  // pixel-dekorasjoner (kun 8-bit)
+  const deco = document.getElementById('pixelDeco');
+  if (deco) {
+    deco.innerHTML = name === 'retro8bit'
+      ? '<span style="color:#FF00FF">♥</span><span style="color:#FFFF00">★</span><span style="color:#00FF00">♥</span><span style="color:#00FFFF">★</span><span style="color:#FF00FF">♥</span><span style="color:#FFFF00">★</span><span style="color:#00FF00">♥</span><span style="color:#00FFFF">★</span> HI-SCORE! <span class="okbtn">OK</span>'
+      : '';
+  }
   const m = document.getElementById('themeMenu');
   if (m) m.classList.remove('open');
   drawChart();
